@@ -140,7 +140,7 @@ fabric.properties
 /web/css/
 /web/js/
 
+.env.test
 .env
 .env.dev
-.env.test
 # End of https://www.toptal.com/developers/gitignore/api/jetbrains+all,symfony
