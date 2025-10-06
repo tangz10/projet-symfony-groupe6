@@ -6,11 +6,13 @@ use App\Repository\ParticipantRepository;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: ParticipantRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 class Participant implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -36,24 +38,6 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $nom = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTime $dateHeureDebut = null;
-
-    #[ORM\Column]
-    private ?int $duree = null;
-
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTime $dateLimiteInscription = null;
-
-    #[ORM\Column]
-    private ?int $nbInscriptionMax = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $infosSortie = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $etat = null;
-
     #[ORM\ManyToOne(inversedBy: 'participants')]
     private ?Site $Site = null;
 
@@ -68,6 +52,21 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\ManyToMany(targetEntity: Sortie::class, mappedBy: 'ParticipantInscrit')]
     private Collection $ParticipantsInscrits;
+
+    #[ORM\Column(length: 255)]
+    private ?string $prenom = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $telephone = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $mail = null;
+
+    #[ORM\Column]
+    private ?bool $administrateur = null;
+
+    #[ORM\Column]
+    private ?bool $actif = null;
 
     public function getId(): ?int
     {
@@ -162,78 +161,6 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getDateHeureDebut(): ?\DateTime
-    {
-        return $this->dateHeureDebut;
-    }
-
-    public function setDateHeureDebut(\DateTime $dateHeureDebut): static
-    {
-        $this->dateHeureDebut = $dateHeureDebut;
-
-        return $this;
-    }
-
-    public function getDuree(): ?int
-    {
-        return $this->duree;
-    }
-
-    public function setDuree(int $duree): static
-    {
-        $this->duree = $duree;
-
-        return $this;
-    }
-
-    public function getDateLimiteInscription(): ?\DateTime
-    {
-        return $this->dateLimiteInscription;
-    }
-
-    public function setDateLimiteInscription(\DateTime $dateLimiteInscription): static
-    {
-        $this->dateLimiteInscription = $dateLimiteInscription;
-
-        return $this;
-    }
-
-    public function getNbInscriptionMax(): ?int
-    {
-        return $this->nbInscriptionMax;
-    }
-
-    public function setNbInscriptionMax(int $nbInscriptionMax): static
-    {
-        $this->nbInscriptionMax = $nbInscriptionMax;
-
-        return $this;
-    }
-
-    public function getInfosSortie(): ?string
-    {
-        return $this->infosSortie;
-    }
-
-    public function setInfosSortie(string $infosSortie): static
-    {
-        $this->infosSortie = $infosSortie;
-
-        return $this;
-    }
-
-    public function getEtat(): ?string
-    {
-        return $this->etat;
-    }
-
-    public function setEtat(string $etat): static
-    {
-        $this->etat = $etat;
-
-        return $this;
-    }
-
     public function getSite(): ?Site
     {
         return $this->Site;
@@ -299,6 +226,66 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
         if ($this->ParticipantsInscrits->removeElement($participantsInscrit)) {
             $participantsInscrit->removeParticipantInscrit($this);
         }
+
+        return $this;
+    }
+
+    public function getPrenom(): ?string
+    {
+        return $this->prenom;
+    }
+
+    public function setPrenom(string $prenom): static
+    {
+        $this->prenom = $prenom;
+
+        return $this;
+    }
+
+    public function getTelephone(): ?string
+    {
+        return $this->telephone;
+    }
+
+    public function setTelephone(string $telephone): static
+    {
+        $this->telephone = $telephone;
+
+        return $this;
+    }
+
+    public function getMail(): ?string
+    {
+        return $this->mail;
+    }
+
+    public function setMail(string $mail): static
+    {
+        $this->mail = $mail;
+
+        return $this;
+    }
+
+    public function isAdministrateur(): ?bool
+    {
+        return $this->administrateur;
+    }
+
+    public function setAdministrateur(bool $administrateur): static
+    {
+        $this->administrateur = $administrateur;
+
+        return $this;
+    }
+
+    public function isActif(): ?bool
+    {
+        return $this->actif;
+    }
+
+    public function setActif(bool $actif): static
+    {
+        $this->actif = $actif;
 
         return $this;
     }
