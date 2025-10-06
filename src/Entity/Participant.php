@@ -3,35 +3,56 @@
 namespace App\Entity;
 
 use App\Repository\ParticipantRepository;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: ParticipantRepository::class)]
-class Participant
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+class Participant implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\Column(length: 180)]
+    private ?string $email = null;
+
+    /**
+     * @var list<string> The user roles
+     */
+    #[ORM\Column]
+    private array $roles = [];
+
+    /**
+     * @var string The hashed password
+     */
+    #[ORM\Column]
+    private ?string $password = null;
+
     #[ORM\Column(length: 255)]
     private ?string $nom = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $prenom = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $telephone = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $mail = null;
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTime $dateHeureDebut = null;
 
     #[ORM\Column]
-    private ?bool $administrateur = null;
+    private ?int $duree = null;
+
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTime $dateLimiteInscription = null;
 
     #[ORM\Column]
-    private ?bool $actif = null;
+    private ?int $nbInscriptionMax = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $infosSortie = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $etat = null;
 
     #[ORM\ManyToOne(inversedBy: 'participants')]
     private ?Site $Site = null;
@@ -48,15 +69,85 @@ class Participant
     #[ORM\ManyToMany(targetEntity: Sortie::class, mappedBy: 'ParticipantInscrit')]
     private Collection $ParticipantsInscrits;
 
-    public function __construct()
-    {
-        $this->SortiesParticipants = new ArrayCollection();
-        $this->ParticipantsInscrits = new ArrayCollection();
-    }
-
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): static
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
+    /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    /**
+     * @param list<string> $roles
+     */
+    public function setRoles(array $roles): static
+    {
+        $this->roles = $roles;
+
+        return $this;
+    }
+
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): ?string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): static
+    {
+        $this->password = $password;
+
+        return $this;
+    }
+
+    /**
+     * Ensure the session doesn't contain actual password hashes by CRC32C-hashing them, as supported since Symfony 7.3.
+     */
+    public function __serialize(): array
+    {
+        $data = (array) $this;
+        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
+
+        return $data;
+    }
+
+    #[\Deprecated]
+    public function eraseCredentials(): void
+    {
+        // @deprecated, to be removed when upgrading to Symfony 8
     }
 
     public function getNom(): ?string
@@ -71,62 +162,74 @@ class Participant
         return $this;
     }
 
-    public function getPrenom(): ?string
+    public function getDateHeureDebut(): ?\DateTime
     {
-        return $this->prenom;
+        return $this->dateHeureDebut;
     }
 
-    public function setPrenom(string $prenom): static
+    public function setDateHeureDebut(\DateTime $dateHeureDebut): static
     {
-        $this->prenom = $prenom;
+        $this->dateHeureDebut = $dateHeureDebut;
 
         return $this;
     }
 
-    public function getTelephone(): ?string
+    public function getDuree(): ?int
     {
-        return $this->telephone;
+        return $this->duree;
     }
 
-    public function setTelephone(string $telephone): static
+    public function setDuree(int $duree): static
     {
-        $this->telephone = $telephone;
+        $this->duree = $duree;
 
         return $this;
     }
 
-    public function getMail(): ?string
+    public function getDateLimiteInscription(): ?\DateTime
     {
-        return $this->mail;
+        return $this->dateLimiteInscription;
     }
 
-    public function setMail(string $mail): static
+    public function setDateLimiteInscription(\DateTime $dateLimiteInscription): static
     {
-        $this->mail = $mail;
+        $this->dateLimiteInscription = $dateLimiteInscription;
 
         return $this;
     }
 
-    public function isAdministrateur(): ?bool
+    public function getNbInscriptionMax(): ?int
     {
-        return $this->administrateur;
+        return $this->nbInscriptionMax;
     }
 
-    public function setAdministrateur(bool $administrateur): static
+    public function setNbInscriptionMax(int $nbInscriptionMax): static
     {
-        $this->administrateur = $administrateur;
+        $this->nbInscriptionMax = $nbInscriptionMax;
 
         return $this;
     }
 
-    public function isActif(): ?bool
+    public function getInfosSortie(): ?string
     {
-        return $this->actif;
+        return $this->infosSortie;
     }
 
-    public function setActif(bool $actif): static
+    public function setInfosSortie(string $infosSortie): static
     {
-        $this->actif = $actif;
+        $this->infosSortie = $infosSortie;
+
+        return $this;
+    }
+
+    public function getEtat(): ?string
+    {
+        return $this->etat;
+    }
+
+    public function setEtat(string $etat): static
+    {
+        $this->etat = $etat;
 
         return $this;
     }
