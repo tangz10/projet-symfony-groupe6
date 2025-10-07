@@ -35,8 +35,12 @@
                         </div>
 
                         <div class="hidden sm:flex sm:items-center">
-                            <a href="{{ path('app_login') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Connexion</a>
-                            <a href="{{ path('app_register') }}" class="text-gray-800 text-sm font-semibold border px-4 py-2 rounded-lg hover:text-purple-600 hover:border-purple-600">S'enregistrer</a>
+                            {% if app.user %}
+                                <a href="{{ path('app_logout') }}" class="text-red-800 text-sm font-semibold border border-red-600 px-4 py-2 rounded-lg hover:text-red-600">Deconnexion</a>
+                            {% else %}
+                                <a href="{{ path('app_login') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Connexion</a>
+                                <a href="{{ path('app_register') }}" class="text-gray-800 text-sm font-semibold border px-4 py-2 rounded-lg hover:text-purple-600 hover:border-purple-600">S'enregistrer</a>
+                            {% endif %}
                         </div>
 
                         <div class="sm:hidden cursor-pointer">
@@ -53,8 +57,13 @@
                             <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Partners</a>
                             <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Pricing</a>
                             <div class="flex justify-between items-center border-t-2 pt-2">
-                                <a href="{{ path('app_login') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Connexion</a>
-                                <a href="{{ path('app_register') }}" class="text-gray-800 text-sm font-semibold border px-4 py-1 rounded-lg hover:text-purple-600 hover:border-purple-600">Inscription</a>
+                                {% if app.user %}
+                                    <a href="{{ path('app_logout') }}" class="text-red-800 text-sm font-semibold border px-4 py-1 rounded-lg hover:text-red-600 hover:border-red-600">Deconnexion</a>
+                                {% else %}
+                                    <a href="{{ path('app_login') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Connexion</a>
+                                    <a href="{{ path('app_register') }}" class="text-gray-800 text-sm font-semibold border px-4 py-1 rounded-lg hover:text-purple-600 hover:border-purple-600">Inscription</a>
+                                {% endif %}
+
                             </div>
                         </div>
                     </div>
