@@ -67,7 +67,7 @@
                             {{ form_errors(registrationForm.plainPassword) }}
                         </div>
 
-                        <div class="mb-3 space-y-2 w-full text-xs flex items-center">
+                        <div class="mb-4 space-y-2 w-full text-xs flex items-center">
                             <div class="flex items-center">
                                 {{ form_widget(registrationForm.agreeTerms, {
                                     'attr': {
@@ -81,7 +81,7 @@
                             </div>
                         </div>
 
-                        <p class="text-xs text-red-500 text-right my-3">Champs obligatoires <abbr title="Required field">*</abbr></p>
+                        <a href="{{ path('app_login') }}" class="text-xs text-red-500 text-right my-3">Déjà inscris ? Connecte toi en cliquant ici !</a>
 
                         <div class="mt-5 text-right md:space-x-3 md:block flex flex-col-reverse">
                             <a href="{{ path('app_index') }}"
