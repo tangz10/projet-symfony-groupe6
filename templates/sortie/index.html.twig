@@ -94,7 +94,7 @@
                                 <td class="px-4 py-3 text-gray-700">{{ s.dateLimiteInscription ? s.dateLimiteInscription|date('d/m/Y') : '' }}</td>
                                 <td class="px-4 py-3 text-gray-700">{{ s.participantInscrit|length }}/{{ s.nbInscriptionsMax }}</td>
                                 <td class="px-4 py-3">
-                                    {% set lib = s.etatRelation ? s.etatRelation.libelle : null %}
+                                    {% set lib = s.etat ? s.etat.libelle : null %}
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                 {{ lib in ['Ouverte','En cours'] ? ' bg-green-100 text-green-800' :
                                     lib in ['Clôturée','Terminée'] ? ' bg-gray-200 text-gray-700' :

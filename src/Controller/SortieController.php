@@ -34,6 +34,7 @@ class SortieController extends AbstractController
             'me' => $user,
         ]);
     }
+
     #[Route('/sortie/new', name: 'sortie_new', methods: ['GET','POST'])]
     #[IsGranted('ROLE_USER')]
     public function new(Request $request, EntityManagerInterface $em, EtatRepository $etatRepository): Response
@@ -46,7 +47,7 @@ class SortieController extends AbstractController
             $sortie->setParticipantOrganisateur($this->getUser());
 
             if ($etat = $etatRepository->findOneBy(['libelle' => 'Créée'])) {
-                $sortie->setEtatRelation($etat);
+                $sortie->setEtat($etat);
             }
 
             $em->persist($sortie);
