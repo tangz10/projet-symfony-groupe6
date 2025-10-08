@@ -38,20 +38,18 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $nom = null;
 
+    // Participant (N) -> (1) Site
     #[ORM\ManyToOne(inversedBy: 'participants')]
-    private ?Site $Site = null;
+    #[ORM\JoinColumn(name: 'site_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?Site $site = null;
 
-    /**
-     * @var Collection<int, Sortie>
-     */
-    #[ORM\OneToMany(targetEntity: Sortie::class, mappedBy: 'ParticipantOrganisateur')]
-    private Collection $SortiesParticipants;
+// Participant (1) -> (N) Sortie (où je suis organisateur)
+    #[ORM\OneToMany(targetEntity: Sortie::class, mappedBy: 'participantOrganisateur')]
+    private Collection $sortiesParticipants;
 
-    /**
-     * @var Collection<int, Sortie>
-     */
-    #[ORM\ManyToMany(targetEntity: Sortie::class, mappedBy: 'ParticipantInscrit')]
-    private Collection $ParticipantsInscrits;
+// Participant (N) <-> (N) Sortie (où je suis inscrit)
+    #[ORM\ManyToMany(targetEntity: Sortie::class, mappedBy: 'participantInscrit')]
+    private Collection $participantsInscrits;
 
     #[ORM\Column(length: 255)]
     private ?string $prenom = null;
@@ -160,12 +158,12 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getSite(): ?Site
     {
-        return $this->Site;
+        return $this->site;
     }
 
-    public function setSite(?Site $Site): static
+    public function setSite(?Site $site): static
     {
-        $this->Site = $Site;
+        $this->site = $site;
 
         return $this;
     }
@@ -175,13 +173,13 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getSortiesParticipants(): Collection
     {
-        return $this->SortiesParticipants;
+        return $this->sortiesParticipants;
     }
 
     public function addSortiesParticipant(Sortie $sortiesParticipant): static
     {
-        if (!$this->SortiesParticipants->contains($sortiesParticipant)) {
-            $this->SortiesParticipants->add($sortiesParticipant);
+        if (!$this->sortiesParticipants->contains($sortiesParticipant)) {
+            $this->sortiesParticipants->add($sortiesParticipant);
             $sortiesParticipant->setParticipantOrganisateur($this);
         }
 
@@ -190,7 +188,7 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function removeSortiesParticipant(Sortie $sortiesParticipant): static
     {
-        if ($this->SortiesParticipants->removeElement($sortiesParticipant)) {
+        if ($this->sortiesParticipants->removeElement($sortiesParticipant)) {
             // set the owning side to null (unless already changed)
             if ($sortiesParticipant->getParticipantOrganisateur() === $this) {
                 $sortiesParticipant->setParticipantOrganisateur(null);
@@ -205,13 +203,13 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getParticipantsInscrits(): Collection
     {
-        return $this->ParticipantsInscrits;
+        return $this->participantsInscrits;
     }
 
     public function addParticipantsInscrit(Sortie $participantsInscrit): static
     {
-        if (!$this->ParticipantsInscrits->contains($participantsInscrit)) {
-            $this->ParticipantsInscrits->add($participantsInscrit);
+        if (!$this->participantsInscrits->contains($participantsInscrit)) {
+            $this->participantsInscrits->add($participantsInscrit);
             $participantsInscrit->addParticipantInscrit($this);
         }
 
@@ -220,7 +218,7 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function removeParticipantsInscrit(Sortie $participantsInscrit): static
     {
-        if ($this->ParticipantsInscrits->removeElement($participantsInscrit)) {
+        if ($this->participantsInscrits->removeElement($participantsInscrit)) {
             $participantsInscrit->removeParticipantInscrit($this);
         }
 

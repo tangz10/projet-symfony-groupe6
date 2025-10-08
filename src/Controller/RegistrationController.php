@@ -18,7 +18,7 @@ class RegistrationController extends AbstractController
     {
 
         if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
-            return $this->redirectToRoute('app_index');
+            return $this->redirectToRoute('sortie_index');
         }
 
         $user = new Participant();
@@ -42,7 +42,7 @@ class RegistrationController extends AbstractController
 
             // do anything else you need here, like send an email
 
-            return $this->redirectToRoute('app_index');
+            return $this->redirectToRoute('sortie_index');
         }
 
         return $this->render('registration/register.html.twig', [

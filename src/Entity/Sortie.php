@@ -40,24 +40,36 @@ class Sortie
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $infosSortie = null;
 
+    // Sortie (N) -> (1) Site
     #[ORM\ManyToOne(inversedBy: 'sorties')]
-    private ?Site $Site = null;
+    #[ORM\JoinColumn(name: 'site_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?Site $site = null;
 
+// Sortie (N) -> (1) Etat
     #[ORM\ManyToOne(inversedBy: 'sorties')]
-    private ?Etat $Etat = null;
+    #[ORM\JoinColumn(name: 'etat_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?Etat $etat = null;
 
-    #[ORM\ManyToOne(inversedBy: 'SortiesParticipants')]
-    private ?Participant $ParticipantOrganisateur = null;
+// Sortie (N) -> (1) Participant (organisateur)
+    #[ORM\ManyToOne(inversedBy: 'sortiesParticipants')]
+    #[ORM\JoinColumn(name: 'participant_organisateur_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?Participant $participantOrganisateur = null;
 
-    #[ORM\ManyToMany(targetEntity: Participant::class, inversedBy: 'ParticipantsInscrits')]
-    private Collection $ParticipantInscrit;
+// Sortie (N) <-> (N) Participant (inscrits)
+    #[ORM\ManyToMany(targetEntity: Participant::class, inversedBy: 'participantsInscrits')]
+    #[ORM\JoinTable(name: 'sortie_participant')]
+    #[ORM\JoinColumn(name: 'sortie_id', referencedColumnName: 'id')]
+    #[ORM\InverseJoinColumn(name: 'participant_id', referencedColumnName: 'id')]
+    private Collection $participantInscrit;
 
+// Sortie (N) -> (1) Lieu
     #[ORM\ManyToOne]
-    private ?Lieu $Lieu = null;
+    #[ORM\JoinColumn(name: 'lieu_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?Lieu $lieu = null;
 
     public function __construct()
     {
-        $this->ParticipantInscrit = new ArrayCollection();
+        $this->participantInscrit = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -137,47 +149,47 @@ class Sortie
 
     public function getEtatRelation(): ?Etat
     {
-        return $this->Etat;
+        return $this->etat;
     }
 
     public function setEtatRelation(?Etat $etat): static
     {
-        $this->Etat = $etat;
+        $this->etat = $etat;
         return $this;
     }
 
     public function getSite(): ?Site
     {
-        return $this->Site;
+        return $this->site;
     }
 
-    public function setSite(?Site $Site): static
+    public function setSite(?Site $site): static
     {
-        $this->Site = $Site;
+        $this->site = $site;
 
         return $this;
     }
 
     public function getParticipantOrganisateur(): ?Participant
     {
-        return $this->ParticipantOrganisateur;
+        return $this->participantOrganisateur;
     }
 
-    public function setParticipantOrganisateur(?Participant $ParticipantOrganisateur): static
+    public function setParticipantOrganisateur(?Participant $participantOrganisateur): static
     {
-        $this->ParticipantOrganisateur = $ParticipantOrganisateur;
+        $this->participantOrganisateur = $participantOrganisateur;
 
         return $this;
     }
 
     public function getLieu(): ?Lieu
     {
-        return $this->Lieu;
+        return $this->lieu;
     }
 
     public function setLieu(?Lieu $lieu): static
     {
-        $this->Lieu = $lieu;
+        $this->lieu = $lieu;
         return $this;
     }
 
@@ -186,13 +198,13 @@ class Sortie
      */
     public function getParticipantInscrit(): Collection
     {
-        return $this->ParticipantInscrit;
+        return $this->participantInscrit;
     }
 
     public function addParticipantInscrit(Participant $participantInscrit): static
     {
-        if (!$this->ParticipantInscrit->contains($participantInscrit)) {
-            $this->ParticipantInscrit->add($participantInscrit);
+        if (!$this->participantInscrit->contains($participantInscrit)) {
+            $this->participantInscrit->add($participantInscrit);
         }
 
         return $this;
@@ -200,7 +212,7 @@ class Sortie
 
     public function removeParticipantInscrit(Participant $participantInscrit): static
     {
-        $this->ParticipantInscrit->removeElement($participantInscrit);
+        $this->participantInscrit->removeElement($participantInscrit);
 
         return $this;
     }
