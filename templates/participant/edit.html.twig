@@ -8,9 +8,9 @@
             <div class="lg:w-[88%] sm:w-[88%] w-full mx-auto shadow-2xl p-4 rounded-xl h-fit self-center dark:bg-gray-800/40">
                 <div class="py-4">
                     <h1 class="lg:text-3xl md:text-2xl text-xl font-serif font-extrabold mb-2 dark:text-white">
-                        Profile
+                        Bienvenue {{ nomParticipant }}!
                     </h1>
-                    <h2 class="text-grey text-sm mb-4 dark:text-gray-400">Update Profile</h2>
+                    <h2 class="text-grey text-sm mb-4 dark:text-gray-400">Modifie ton profile</h2>
 
                     {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
                     {{ form_errors(form) }}
@@ -52,6 +52,33 @@
                             {{ form_errors(form.telephone) }}
                         </div>
                     </div>
+
+                    <div class="flex flex-col lg:flex-row gap-4">
+                        <div class="flex items-center space-x-2">
+                            {{ form_widget(form.administrateur, {
+                                'attr': {
+                                    'class': 'h-5 w-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500'
+                                }
+                            }) }}
+                            {{ form_label(form.administrateur, 'Administrateur', {
+                                'label_attr': {'class': 'text-gray-700 dark:text-gray-300'}
+                            }) }}
+                            {{ form_errors(form.administrateur) }}
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            {{ form_widget(form.actif, {
+                                'attr': {
+                                    'class': 'h-5 w-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500'
+                                }
+                            }) }}
+                            {{ form_label(form.actif, 'Actif', {
+                                'label_attr': {'class': 'text-gray-700 dark:text-gray-300'}
+                            }) }}
+                            {{ form_errors(form.actif) }}
+                        </div>
+                    </div>
+
 
                     <div class="w-full flex mt-6 justify-between gap-3">
                         <button type="submit"
