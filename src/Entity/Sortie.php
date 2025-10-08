@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: SortieRepository::class)]
 class Sortie
@@ -17,25 +18,27 @@ class Sortie
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom est obligatoire")]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: "Le nom ne doit pas dépasser 255 caractères"
+    )]
     private ?string $nom = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTime $dateHeureDebut = null;
+    private ?\DateTimeInterface $dateHeureDebut = null;
 
     #[ORM\Column]
     private ?int $duree = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTime $dateLimiteInscription = null;
+    private ?\DateTimeInterface $dateLimiteInscription = null;
 
     #[ORM\Column]
     private ?int $nbInscriptionsMax = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $infosSortie = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $etat = null;
 
     #[ORM\ManyToOne(inversedBy: 'sorties')]
     private ?Site $Site = null;
@@ -46,11 +49,11 @@ class Sortie
     #[ORM\ManyToOne(inversedBy: 'SortiesParticipants')]
     private ?Participant $ParticipantOrganisateur = null;
 
-    /**
-     * @var Collection<int, Participant>
-     */
     #[ORM\ManyToMany(targetEntity: Participant::class, inversedBy: 'ParticipantsInscrits')]
     private Collection $ParticipantInscrit;
+
+    #[ORM\ManyToOne]
+    private ?Lieu $Lieu = null;
 
     public function __construct()
     {
@@ -79,10 +82,9 @@ class Sortie
         return $this->dateHeureDebut;
     }
 
-    public function setDateHeureDebut(\DateTime $dateHeureDebut): static
+    public function setDateHeureDebut(?\DateTime $dateHeureDebut): static
     {
         $this->dateHeureDebut = $dateHeureDebut;
-
         return $this;
     }
 
@@ -103,10 +105,9 @@ class Sortie
         return $this->dateLimiteInscription;
     }
 
-    public function setDateLimiteInscription(\DateTime $dateLimiteInscription): static
+    public function setDateLimiteInscription(?\DateTime $dateLimiteInscription): static
     {
         $this->dateLimiteInscription = $dateLimiteInscription;
-
         return $this;
     }
 
@@ -134,15 +135,14 @@ class Sortie
         return $this;
     }
 
-    public function getEtat(): ?string
+    public function getEtatRelation(): ?Etat
     {
-        return $this->etat;
+        return $this->Etat;
     }
 
-    public function setEtat(string $etat): static
+    public function setEtatRelation(?Etat $etat): static
     {
-        $this->etat = $etat;
-
+        $this->Etat = $etat;
         return $this;
     }
 
@@ -167,6 +167,17 @@ class Sortie
     {
         $this->ParticipantOrganisateur = $ParticipantOrganisateur;
 
+        return $this;
+    }
+
+    public function getLieu(): ?Lieu
+    {
+        return $this->Lieu;
+    }
+
+    public function setLieu(?Lieu $lieu): static
+    {
+        $this->Lieu = $lieu;
         return $this;
     }
 
