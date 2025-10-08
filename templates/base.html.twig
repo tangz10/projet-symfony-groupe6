@@ -13,7 +13,7 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body>
+    <body class="h-dvh overflow-hidden flex flex-col bg-gray-100">
     {% set current_route = app.request.attributes.get('_route') %}
 
     {% if current_route not in ['app_login', 'app_register'] %}
@@ -72,13 +72,6 @@
         </div>
     {% endif %}
 
-    {% block body %}
-        <div>
-            <a href="{{ path('sortie_new') }}" class="inline-flex justify-center items-center h-11 px-6 rounded-full bg-purple-600 text-white font-medium hover:bg-purple-700 shadow">
-                Créer une sortie
-            </a>
-        </div>
-    {% endblock %}
+    {% block body %}{% endblock %}
     </body>
-
 </html>
