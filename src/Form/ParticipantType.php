@@ -16,15 +16,14 @@ class ParticipantType extends AbstractType
     {
         $builder
             ->add('email')
-            ->add('roles')
-            ->add('password')
+            // ->add('roles')
+            // ->add('password')
             ->add('nom')
             ->add('prenom')
             ->add('telephone')
-            ->add('mail')
             ->add('administrateur')
             ->add('actif')
-            ->add('Site', EntityType::class, [
+            /* ->add('Site', EntityType::class, [
                 'class' => Site::class,
                 'choice_label' => 'id',
             ])
@@ -32,7 +31,7 @@ class ParticipantType extends AbstractType
                 'class' => Sortie::class,
                 'choice_label' => 'id',
                 'multiple' => true,
-            ])
+            ]) */
         ;
     }
 

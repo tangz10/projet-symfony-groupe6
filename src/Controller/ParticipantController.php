@@ -64,6 +64,7 @@ final class ParticipantController extends AbstractController
 
         return $this->render('participant/edit.html.twig', [
             'participant' => $participant,
+            'nomParticipant' => $participant->getPrenom(),
             'form' => $form,
         ]);
     }
