@@ -28,15 +28,25 @@
                         </div>
 
                         <div class="hidden sm:flex sm:items-center">
-                            <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Products</a>
-                            <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Marketplace</a>
-                            <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Partners</a>
-                            <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600">Pricing</a>
+                            <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Sorties</a>
+                            <a href="{{ path('app_ville_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Villes</a>
+                            <a href="{{ path('app_site_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Sites</a>
+                            <a href="{{ path('app_participant_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600">Administration</a>
                         </div>
 
-                        <div class="hidden sm:flex sm:items-center">
+                        <div class="hidden sm:flex sm:items-center gap-4">
                             {% if app.user %}
                                 <a href="{{ path('app_logout') }}" class="text-red-800 text-sm font-semibold border border-red-600 px-4 py-2 rounded-lg hover:text-red-600">Deconnexion</a>
+                                <a href="{{ path('app_participant_show', {'id': app.user.id}) }}"
+                                   class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-purple-600 bg-purple-100 hover:bg-purple-200 transition">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         class="stroke-purple-600">
+                                        <path d="M5 21C5 17.134 8.13401 14 12 14C15.866 14 19 17.134 19 21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z"
+                                              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </a>
+
                             {% else %}
                                 <a href="{{ path('app_login') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Connexion</a>
                                 <a href="{{ path('app_register') }}" class="text-gray-800 text-sm font-semibold border px-4 py-2 rounded-lg hover:text-purple-600 hover:border-purple-600">S'enregistrer</a>
@@ -52,10 +62,10 @@
 
                     <div class="block sm:hidden bg-white border-t-2 py-2">
                         <div class="flex flex-col">
-                            <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Products</a>
-                            <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Marketplace</a>
-                            <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Partners</a>
-                            <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Pricing</a>
+                            <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Sorties</a>
+                            <a href="{{ path('app_ville_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Ville</a>
+                            <a href="{{ path('app_site_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Site</a>
+                            <a href="{{ path('app_participant_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Administration</a>
                             <div class="flex justify-between items-center border-t-2 pt-2">
                                 {% if app.user %}
                                     <a href="{{ path('app_logout') }}" class="text-red-800 text-sm font-semibold border px-4 py-1 rounded-lg hover:text-red-600 hover:border-red-600">Deconnexion</a>
