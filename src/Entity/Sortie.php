@@ -40,29 +40,24 @@ class Sortie
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $infosSortie = null;
 
-    // Sortie (N) -> (1) Site
     #[ORM\ManyToOne(inversedBy: 'sorties')]
     #[ORM\JoinColumn(name: 'site_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Site $site = null;
 
-// Sortie (N) -> (1) Etat
     #[ORM\ManyToOne(inversedBy: 'sorties')]
     #[ORM\JoinColumn(name: 'etat_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Etat $etat = null;
 
-// Sortie (N) -> (1) Participant (organisateur)
     #[ORM\ManyToOne(inversedBy: 'sortiesParticipants')]
     #[ORM\JoinColumn(name: 'participant_organisateur_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Participant $participantOrganisateur = null;
 
-// Sortie (N) <-> (N) Participant (inscrits)
     #[ORM\ManyToMany(targetEntity: Participant::class, inversedBy: 'participantsInscrits')]
     #[ORM\JoinTable(name: 'sortie_participant')]
     #[ORM\JoinColumn(name: 'sortie_id', referencedColumnName: 'id')]
     #[ORM\InverseJoinColumn(name: 'participant_id', referencedColumnName: 'id')]
     private Collection $participantInscrit;
 
-// Sortie (N) -> (1) Lieu
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'lieu_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Lieu $lieu = null;

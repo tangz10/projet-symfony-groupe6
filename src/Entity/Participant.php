@@ -38,16 +38,13 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $nom = null;
 
-    // Participant (N) -> (1) Site
     #[ORM\ManyToOne(inversedBy: 'participants')]
     #[ORM\JoinColumn(name: 'site_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Site $site = null;
 
-// Participant (1) -> (N) Sortie (où je suis organisateur)
     #[ORM\OneToMany(targetEntity: Sortie::class, mappedBy: 'participantOrganisateur')]
     private Collection $sortiesParticipants;
 
-// Participant (N) <-> (N) Sortie (où je suis inscrit)
     #[ORM\ManyToMany(targetEntity: Sortie::class, mappedBy: 'participantInscrit')]
     private Collection $participantsInscrits;
 
