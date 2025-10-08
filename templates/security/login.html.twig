@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Log in!{% endblock %}
+
+{% block body %}
+
+    <div class="relative min-h-screen flex items-center justify-center bg-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 bg-gray-500 bg-no-repeat bg-cover relative items-center"
+         style="background-image: url(https://www.terre.tv/wp-content/uploads/2023/11/sortie-entre-amis-1200x800.jpg);">
+        <div class="absolute bg-black opacity-60 inset-0 z-0"></div>
+
+        <div class="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg z-10">
+            <div class="grid gap-8 grid-cols-1">
+                <div class="flex flex-col">
+                    <div class="flex flex-col sm:flex-row items-center">
+                        <h2 class="font-semibold text-lg mr-auto">Connexion à ton compte</h2>
+                    </div>
+
+                    <div class="mt-5">
+                        <form method="post" class="space-y-4">
+                            {% if error %}
+                                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-sm">
+                                    {{ error.messageKey|trans(error.messageData, 'security') }}
+                                </div>
+                            {% endif %}
+
+{#                            {% if app.user %}
+                                <div class="bg-green-100 text-green-700 px-4 py-2 rounded text-sm">
+                                    Connecté en tant que <strong>{{ app.user.userIdentifier }}</strong>.
+                                    <a href="{{ path('app_logout') }}" class="underline text-purple-600 hover:text-purple-800 ml-1">Déconnexion</a>
+                                </div>
+                            {% endif %}#}
+
+                            <div class="space-y-2 text-xs">
+                                <label for="username" class="font-semibold text-gray-600 py-2">Email<abbr title="required">*</abbr></label>
+                                <input type="email" value="{{ last_username }}" name="_username" id="username"
+                                       class="appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-300 rounded-lg h-10 px-4
+                                          focus:border-purple-600 focus:ring-4 focus:ring-purple-600 focus:ring-opacity-50 outline-none"
+                                       autocomplete="email" required autofocus>
+                            </div>
+
+                            <div class="space-y-2 text-xs">
+                                <label for="password" class="font-semibold text-gray-600 py-2">Mot de passe<abbr title="required">*</abbr></label>
+                                <input type="password" name="_password" id="password"
+                                       class="appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-300 rounded-lg h-10 px-4
+                                          focus:border-purple-600 focus:ring-4 focus:ring-purple-600 focus:ring-opacity-50 outline-none"
+                                       autocomplete="current-password" required>
+                            </div>
+
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                            <div class="flex items-center mb-3">
+                                <input type="checkbox" name="_remember_me" id="_remember_me"
+                                       class="mr-2 accent-purple-600 w-5 h-5 rounded">
+                                <label for="_remember_me" class="text-sm text-gray-700">Se souvenir de moi</label>
+                            </div>
+
+                            <div class="mt-7 text-right md:space-x-3 md:block flex flex-col-reverse">
+                                <a href="{{ path('app_register') }}"
+                                   class="mb-2 md:mb-0 bg-white px-5 py-2 text-sm shadow-sm font-medium tracking-wider text-gray-600 hover:shadow-lg hover:bg-gray-100">
+                                    Créer un compte
+                                </a>
+                                <button type="submit"
+                                        class="mb-2 md:mb-0 bg-purple-600 px-5 py-2 text-sm shadow-sm font-medium tracking-wider text-white rounded-full hover:shadow-lg hover:bg-purple-500">
+                                    Se connecter
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

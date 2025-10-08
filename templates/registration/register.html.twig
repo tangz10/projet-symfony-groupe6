@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Register{% endblock %}
+
+{% block body %}
+
+    <div class="relative min-h-screen flex items-center justify-center bg-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 bg-gray-500 bg-no-repeat bg-cover relative items-center"
+         style="background-image: url(https://www.visiter-bordeaux.eu/wp-content/uploads/2022/08/sortie-amies-1.jpg);">
+        <div class="absolute bg-black opacity-60 inset-0 z-0"></div>
+
+        <div class="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg z-10">
+            <div class="grid gap-8 grid-cols-1">
+                <div class="flex flex-col">
+                    <div class="flex flex-col sm:flex-row items-center">
+                        <h2 class="font-semibold text-lg mr-auto">Inscris toi sur notre site !</h2>
+                    </div>
+
+                    <div class="mt-5">
+                        {{ form_start(registrationForm, {'attr': {'class': 'space-y-4'}}) }}
+                        {{ form_errors(registrationForm) }}
+
+                        <div class="md:flex flex-row md:space-x-4 w-full text-xs">
+                            <div class="mb-3 space-y-2 w-full text-xs">
+                                <label for="{{ registrationForm.prenom.vars.id }}" class="font-semibold text-gray-600 py-2">
+                                    Prénom<abbr title="required">*</abbr>
+                                </label>
+                                {{ form_widget(registrationForm.prenom, {
+                                    'attr': {'class': 'appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-300 rounded-lg h-10 px-4 focus:border-purple-600 focus:ring-3 focus:ring-purple-600 outline-none'}
+                                }) }}
+                                {{ form_errors(registrationForm.prenom) }}
+                            </div>
+
+                            <div class="mb-3 space-y-2 w-full text-xs">
+                                <label for="{{ registrationForm.nom.vars.id }}" class="font-semibold text-gray-600 py-2">
+                                    Nom<abbr title="required">*</abbr>
+                                </label>
+                                {{ form_widget(registrationForm.nom, {
+                                    'attr': {'class': 'appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-300 rounded-lg h-10 px-4 focus:border-purple-600 focus:ring-3 focus:ring-purple-600 outline-none'}
+                                }) }}
+                                {{ form_errors(registrationForm.nom) }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3 space-y-2 w-full text-xs">
+                            <label for="{{ registrationForm.email.vars.id }}" class="font-semibold text-gray-600 py-2">
+                                Email<abbr title="required">*</abbr>
+                            </label>
+                            {{ form_widget(registrationForm.email, {
+                                'attr': {'class': 'appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-300 rounded-lg h-10 px-4 focus:border-purple-600 focus:ring-3 focus:ring-purple-600 outline-none'}
+                            }) }}
+                            {{ form_errors(registrationForm.email) }}
+                        </div>
+
+                        <div class="mb-3 space-y-2 w-full text-xs">
+                            <label for="{{ registrationForm.telephone.vars.id }}" class="font-semibold text-gray-600 py-2">Téléphone</label>
+                            {{ form_widget(registrationForm.telephone, {
+                                'attr': {'class': 'appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-300 rounded-lg h-10 px-4 focus:border-purple-600 focus:ring-3 focus:ring-purple-600 outline-none'}
+                            }) }}
+                            {{ form_errors(registrationForm.telephone) }}
+                        </div>
+
+                        <div class="mb-3 space-y-2 w-full text-xs">
+                            <label for="{{ registrationForm.plainPassword.vars.id }}" class="font-semibold text-gray-600 py-2">Mot de passe</label>
+                            {{ form_widget(registrationForm.plainPassword, {
+                                'attr': {'class': 'appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-300 rounded-lg h-10 px-4 focus:border-purple-600 focus:ring-3 focus:ring-purple-600 outline-none'}
+                            }) }}
+                            {{ form_errors(registrationForm.plainPassword) }}
+                        </div>
+
+                        <div class="mb-4 space-y-2 w-full text-xs flex items-center">
+                            <div class="flex items-center">
+                                {{ form_widget(registrationForm.agreeTerms, {
+                                    'attr': {
+                                        'class': 'mr-2 accent-purple-600 w-5 h-5 rounded'
+                                    }
+                                }) }}
+                                <label for="{{ registrationForm.agreeTerms.vars.id }}" class="text-sm text-gray-700">
+                                    J'accepte les conditions
+                                </label>
+                                {{ form_errors(registrationForm.agreeTerms) }}
+                            </div>
+                        </div>
+
+                        <a href="{{ path('app_login') }}" class="text-xs text-red-500 text-right my-3">Déjà inscris ? Connecte toi en cliquant ici !</a>
+
+                        <div class="mt-5 text-right md:space-x-3 md:block flex flex-col-reverse">
+                            <a href="{{ path('sortie_index') }}"
+                               class="mb-2 md:mb-0 bg-white px-5 py-2 text-sm shadow-sm font-medium tracking-wider border text-gray-600 rounded-full hover:shadow-lg hover:bg-gray-100">
+                                Annuler
+                            </a>
+                            <button type="submit"
+                                    class="mb-2 md:mb-0 bg-purple-600 px-5 py-2 text-sm shadow-sm font-medium tracking-wider text-white rounded-full hover:shadow-lg hover:bg-purple-500">
+                                S'enregistrer
+                            </button>
+                        </div>
+
+                        {{ form_end(registrationForm) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
