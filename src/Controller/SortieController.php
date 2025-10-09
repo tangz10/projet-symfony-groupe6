@@ -18,7 +18,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/sortie')]
 class SortieController extends AbstractController
 {
-    #[Route('/', name: 'app_sortie_index', methods: ['GET'])]
+    #[Route(name: 'app_sortie_index', methods: ['GET'])]
     public function index(Request $request, SortieRepository $repo): Response
     {
         $form = $this->createForm(SortieFilterType::class);
