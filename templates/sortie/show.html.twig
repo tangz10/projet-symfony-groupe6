@@ -6,6 +6,7 @@
     <div class="flex-1 overflow-y-auto">
         <div class="max-w-5xl mx-auto px-4 py-6">
             <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 md:p-8">
+
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <h1 class="text-2xl md:text-3xl font-semibold text-gray-800">Afficher une sortie</h1>
                     <a href="{{ path('app_sortie_index') }}"
@@ -15,12 +16,19 @@
                 </div>
 
                 {% set isAnnulee = s.etat and s.etat.libelle == 'Annulée' %}
+                {% set isOuverte = s.etat and s.etat.libelle == 'Ouverte' %}
+                {% set isCreee = s.etat and s.etat.libelle == 'Créée' %}
+                {% set isOrganisateur = me and s.participantOrganisateur and me.id == s.participantOrganisateur.id %}
+                {% set inscrit = me ? s.participantInscrit.contains(me) : false %}
+
                 {% if isAnnulee %}
                     <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
                         <div class="flex items-start gap-3">
                             <div class="mt-0.5">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 7a1 1 0 112 0v4a1 1 0 11-2 0V7zm2 6a1 1 0 10-2 0 1 1 0 002 0z" clip-rule="evenodd" />
+                                    <path fill-rule="evenodd"
+                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 7a1 1 0 112 0v4a1 1 0 11-2 0V7zm2 6a1 1 0 10-2 0 1 1 0 002 0z"
+                                          clip-rule="evenodd" />
                                 </svg>
                             </div>
                             <div class="text-sm">
@@ -38,6 +46,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                     <div class="space-y-3">
+
                         <div class="flex items-baseline gap-2">
                             <span class="w-44 text-sm text-gray-600">Nom de la sortie :</span>
                             <span class="text-gray-900 font-medium">{{ s.nom }}</span>
@@ -46,36 +55,36 @@
                         <div class="flex items-baseline gap-2">
                             <span class="w-44 text-sm text-gray-600">Date et heure de la sortie :</span>
                             <span class="text-gray-900">
-                              {{ s.dateHeureDebut ? s.dateHeureDebut|date('d/m/Y H:i') : '—' }}
-                            </span>
+                {{ s.dateHeureDebut ? s.dateHeureDebut|date('d/m/Y H:i') : '—' }}
+              </span>
                         </div>
 
                         <div class="flex items-baseline gap-2">
                             <span class="w-44 text-sm text-gray-600">Date limite d'inscription :</span>
                             <span class="text-gray-900">
-                              {{ s.dateLimiteInscription ? s.dateLimiteInscription|date('d/m/Y') : '—' }}
-                            </span>
+                {{ s.dateLimiteInscription ? s.dateLimiteInscription|date('d/m/Y') : '—' }}
+              </span>
                         </div>
 
                         <div class="flex items-baseline gap-2">
                             <span class="w-44 text-sm text-gray-600">Nombre de places :</span>
                             <span class="text-gray-900">
-                              {{ s.nbInscriptionsMax is not null ? s.nbInscriptionsMax : '—' }}
-                            </span>
+                {{ s.nbInscriptionsMax is not null ? s.nbInscriptionsMax : '—' }}
+              </span>
                         </div>
 
                         <div class="flex items-baseline gap-2">
                             <span class="w-44 text-sm text-gray-600">Durée :</span>
                             <span class="text-gray-900">
-                              {{ s.duree is not null ? s.duree ~ ' minutes' : '—' }}
-                            </span>
+                {{ s.duree is not null ? s.duree ~ ' minutes' : '—' }}
+              </span>
                         </div>
 
                         <div class="flex items-baseline gap-2">
                             <span class="w-44 text-sm text-gray-600">État :</span>
                             <span class="text-gray-900">
-                                {{ s.etat ? s.etat.libelle : '—' }}
-                            </span>
+                {{ s.etat ? s.etat.libelle : '—' }}
+              </span>
                         </div>
 
                         <div class="flex flex-col gap-1">
@@ -145,28 +154,28 @@
                         </div>
                     </div>
 
-                    {% set isOuverte = s.etat and s.etat.libelle == 'Ouverte' %}
                     <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-                        {% if me %}
-                            {% set inscrit = s.participantInscrit.contains(me) %}
+                        {% if me and not isOrganisateur %}
                             {% if not inscrit and isOuverte and not isAnnulee %}
                                 <a href=""
-                                   class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
+                                   class="h-11 px-6 flex items-center justify-center rounded-full bg-green-700 text-white hover:bg-green-800 shadow">
                                     S’inscrire
                                 </a>
                             {% elseif inscrit %}
                                 <a href=""
-                                   class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-red-700 shadow">
+                                   class="h-11 px-6 flex items-center justify-center rounded-full bg-red-700 text-white hover:bg-red-800 shadow">
                                     Se désister
                                 </a>
                             {% endif %}
                         {% endif %}
 
-                        {% if me
-                            and s.participantOrganisateur
-                            and me.id == s.participantOrganisateur.id
-                            and (s.dateHeureDebut is empty or s.dateHeureDebut > 'now'|date)
-                            and not isAnnulee %}
+                        {% if isOrganisateur and not isAnnulee and isCreee %}
+                            <form method="post" action="{{ path('app_sortie_publier', {'id': s.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('publish' ~ s.id) }}">
+                                <button class="h-11 px-6 rounded-full bg-green-700 text-white hover:bg-green-800 shadow">
+                                    Publier
+                                </button>
+                            </form>
 
                             <button type="button"
                                     class="h-11 px-6 rounded-full bg-red-700 text-white hover:bg-red-800 shadow"
@@ -174,13 +183,10 @@
                                 Annuler la sortie
                             </button>
 
-                            {# Modal d'annulation avec motif #}
                             <div id="modal-annulation" class="hidden fixed inset-0 flex items-center justify-center bg-black/60 z-50">
                                 <div class="bg-white rounded-2xl shadow-xl p-6 w-96 text-center">
                                     <h2 class="text-lg font-semibold text-gray-800 mb-3">Confirmer l’annulation</h2>
-                                    <p class="text-gray-600 mb-4">
-                                        Vous pouvez indiquer un motif d’annulation :
-                                    </p>
+                                    <p class="text-gray-600 mb-4">Vous pouvez indiquer un motif d’annulation :</p>
 
                                     <form method="post"
                                           action="{{ path('app_sortie_annuler', {'id': s.id}) }}"
@@ -200,7 +206,7 @@
                                             <button type="button"
                                                     onclick="document.getElementById('modal-annulation').classList.add('hidden')"
                                                     class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
-                                                Annuler
+                                                Fermer
                                             </button>
                                         </div>
                                     </form>
@@ -209,6 +215,7 @@
                         {% endif %}
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

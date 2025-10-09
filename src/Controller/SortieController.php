@@ -118,4 +118,41 @@ class SortieController extends AbstractController
         $this->addFlash('success', 'La sortie a été annulée.');
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
+
+    #[Route('/{id}/publier', name: 'app_sortie_publier', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function publier(
+        Sortie $sortie,
+        Request $request,
+        EtatRepository $etatRepository,
+        EntityManagerInterface $em
+    ) {
+        if (!$this->isCsrfTokenValid('publish'.$sortie->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $me = $this->getUser();
+        if (!$sortie->getParticipantOrganisateur() || $sortie->getParticipantOrganisateur()->getId() !== $me->getId()) {
+            $this->addFlash('error', 'Vous ne pouvez pas publier cette sortie.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        if (!$sortie->getEtat() || $sortie->getEtat()->getLibelle() !== 'Créée') {
+            $this->addFlash('error', 'Seules les sorties à l’état "Créée" peuvent être publiées.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $etatOuverte = $etatRepository->findOneBy(['libelle' => 'Ouverte']);
+        if (!$etatOuverte) {
+            $this->addFlash('error', 'État "Ouverte" introuvable.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $sortie->setEtat($etatOuverte);
+        $em->flush();
+
+        $this->addFlash('success', 'La sortie a été publiée (ouverte aux inscriptions).');
+        return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+    }
 }
