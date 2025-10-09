@@ -75,6 +75,13 @@ final class ParticipantController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            if ($participant->isAdministrateur() === true) {
+                $participant->setRoles(['ROLE_ADMIN']);
+            } else {
+                $participant->setRoles(['ROLE_USER']);
+            }
+
             $entityManager->flush();
 
             return $this->redirectToRoute('app_participant_show', [
