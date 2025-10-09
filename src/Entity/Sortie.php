@@ -142,12 +142,12 @@ class Sortie
         return $this;
     }
 
-    public function getEtatRelation(): ?Etat
+    public function getEtat(): ?Etat
     {
         return $this->etat;
     }
 
-    public function setEtatRelation(?Etat $etat): static
+    public function setEtat(?Etat $etat): static
     {
         $this->etat = $etat;
         return $this;
