@@ -54,7 +54,7 @@ class SortieController extends AbstractController
             $em->persist($sortie);
             $em->flush();
 
-            return $this->redirectToRoute('app_index');
+            return $this->redirectToRoute('app_sortie_index');
         }
 
         $status = $form->isSubmitted() ? 422 : 200;
@@ -64,7 +64,7 @@ class SortieController extends AbstractController
         ], new Response(status: $status));
     }
 
-    #[Route('/sortie/{id}', name: 'app_sortie_show', requirements: ['id' => '\d+'])]
+    #[Route('/{id}', name: 'app_sortie_show', requirements: ['id' => '\d+'])]
     public function show(Sortie $sortie): Response
     {
         return $this->render('sortie/show.html.twig', [
@@ -73,4 +73,49 @@ class SortieController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}/annuler', name: 'app_sortie_annuler', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function annuler(
+        Sortie $sortie,
+        Request $request,
+        EtatRepository $etatRepository,
+        EntityManagerInterface $em
+    ) {
+        if (!$this->isCsrfTokenValid('cancel'.$sortie->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $me = $this->getUser();
+
+        if (!$sortie->getParticipantOrganisateur() || $sortie->getParticipantOrganisateur()->getId() !== $me->getId()) {
+            $this->addFlash('error', 'Vous ne pouvez pas annuler cette sortie.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $now = new \DateTimeImmutable();
+        if ($sortie->getDateHeureDebut() && $sortie->getDateHeureDebut() <= $now) {
+            $this->addFlash('error', 'La sortie a déjà commencé : annulation impossible.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $motif = trim($request->request->get('motif', ''));
+
+        $etatAnnulee = $etatRepository->findOneBy(['libelle' => 'Annulée']);
+        if (!$etatAnnulee) {
+            $this->addFlash('error', 'État "Annulée" introuvable.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $sortie->setEtat($etatAnnulee);
+
+        if (method_exists($sortie, 'setMotifAnnulation')) {
+            $sortie->setMotifAnnulation($motif ?: null);
+        }
+
+        $em->flush();
+
+        $this->addFlash('success', 'La sortie a été annulée.');
+        return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+    }
 }

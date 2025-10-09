@@ -62,6 +62,9 @@ class Sortie
     #[ORM\JoinColumn(name: 'lieu_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Lieu $lieu = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $motifAnnulation = null;
+
     public function __construct()
     {
         $this->participantInscrit = new ArrayCollection();
@@ -209,6 +212,17 @@ class Sortie
     {
         $this->participantInscrit->removeElement($participantInscrit);
 
+        return $this;
+    }
+
+    public function getMotifAnnulation(): ?string
+    {
+        return $this->motifAnnulation;
+    }
+
+    public function setMotifAnnulation(?string $motifAnnulation): self
+    {
+        $this->motifAnnulation = $motifAnnulation;
         return $this;
     }
 }
