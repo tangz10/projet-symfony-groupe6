@@ -3,7 +3,6 @@
 {% block title %}Créer une sortie{% endblock %}
 
 {% block body %}
-    {# Héro avec image de fond + overlay sombre #}
     <div class="relative min-h-screen flex items-center justify-center bg-center bg-no-repeat bg-cover"
          style="background-image:url('https://images.unsplash.com/photo-1533105079780-92b9be482077?q=80&w=1600&auto=format&fit=crop');">
         <div class="absolute inset-0 bg-black/60 z-0"></div>
@@ -13,16 +12,9 @@
                 <div class="flex items-center justify-between mb-6">
                     <h1 class="text-2xl sm:text-3xl font-semibold text-gray-800">Créer une sortie</h1>
                     <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-          Nouveau
-        </span>
+                      Nouveau
+                    </span>
                 </div>
-                {% for label, messages in app.flashes %}
-                    {% for message in messages %}
-                        <div class="mb-4 rounded-md border {{ label == 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700' }} px-4 py-3">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endfor %}
 
                 {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
 
