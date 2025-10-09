@@ -32,7 +32,7 @@
 
                         <div class="hidden sm:flex sm:items-center">
                             {% if is_granted('ROLE_ADMIN') %}
-                                <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Sorties</a>
+                                <a href="{{ path('app_sortie_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Sorties</a>
                                 <a href="{{ path('app_ville_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Villes</a>
                                 <a href="{{ path('app_site_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Sites</a>
                                 <a href="{{ path('app_participant_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600">Administration</a>
@@ -68,7 +68,7 @@
                     <div class="block sm:hidden bg-white border-t-2 py-2">
                         <div class="flex flex-col">
                             {% if is_granted('ROLE_ADMIN') %}
-                                <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Sorties</a>
+                                <a href="{{ path('app_sortie_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Sorties</a>
                                 <a href="{{ path('app_ville_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Ville</a>
                                 <a href="{{ path('app_site_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Site</a>
                                 <a href="{{ path('app_participant_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Administration</a>
