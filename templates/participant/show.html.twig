@@ -57,6 +57,12 @@
                     </div>
 
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Site</label>
+                        <input type="text" value="{{ participant.site ? 'Aucun' }}" disabled
+                               class="mt-2 px-4 py-2 w-full border-2 rounded-lg bg-gray-100 dark:bg-gray-700 dark:text-gray-200 border-gray-300 cursor-not-allowed" />
+                    </div>
+
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Administrateur</label>
                         <input type="text" value="{{ participant.administrateur ? 'Oui' : 'Non' }}" disabled
                                class="mt-2 px-4 py-2 w-full border-2 rounded-lg bg-gray-100 dark:bg-gray-700 dark:text-gray-200 border-gray-300 cursor-not-allowed" />
