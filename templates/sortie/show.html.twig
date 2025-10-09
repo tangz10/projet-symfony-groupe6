@@ -14,7 +14,6 @@
                     </a>
                 </div>
 
-                {# --- Bandeau si ANNULÉE --- #}
                 {% set isAnnulee = s.etat and s.etat.libelle == 'Annulée' %}
                 {% if isAnnulee %}
                     <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
@@ -72,7 +71,6 @@
                             </span>
                         </div>
 
-                        {# État affiché ici aussi (pour cohérence) #}
                         <div class="flex items-baseline gap-2">
                             <span class="w-44 text-sm text-gray-600">État :</span>
                             <span class="text-gray-900">
