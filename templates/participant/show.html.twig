@@ -70,9 +70,9 @@
                 </div>
 
                 <div class="mt-8 flex justify-between">
-                    <a href="{{ path('app_participant_index') }}"
-                       class="text-purple-600 font-semibold hover:underline">
-                        ← Retour à la liste
+                    <a onclick="history.back()"
+                       class="text-purple-600 font-semibold hover:underline cursor-pointer">
+                        ← Retour
                     </a>
 
                     <a href="{{ path('app_participant_edit', {'id': participant.id}) }}"
