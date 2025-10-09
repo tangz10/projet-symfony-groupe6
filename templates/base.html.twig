@@ -37,7 +37,7 @@
                                 <a href="{{ path('app_site_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Sites</a>
                                 <a href="{{ path('app_participant_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600">Administration</a>
                             {% else %}
-                                <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Sorties</a>
+                                <a href="{{ path('app_sortie_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mr-4">Sorties</a>
                             {% endif %}
                         </div>
 
@@ -73,7 +73,7 @@
                                 <a href="{{ path('app_site_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Site</a>
                                 <a href="{{ path('app_participant_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Administration</a>
                             {% else %}
-                                <a href="#" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Sorties</a>
+                                <a href="{{ path('app_sortie_index') }}" class="text-gray-800 text-sm font-semibold hover:text-purple-600 mb-1">Sorties</a>
                             {% endif %}
                             <div class="flex justify-between items-center border-t-2 pt-2">
                                 {% if app.user %}
