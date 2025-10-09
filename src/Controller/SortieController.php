@@ -15,9 +15,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[Route('/sortie')]
 class SortieController extends AbstractController
 {
-    #[Route('/', name: 'sortie_index', methods: ['GET'])]
+    #[Route('/', name: 'app_sortie_index', methods: ['GET'])]
     public function index(Request $request, SortieRepository $repo): Response
     {
         $form = $this->createForm(SortieFilterType::class);
@@ -35,7 +36,7 @@ class SortieController extends AbstractController
         ]);
     }
 
-    #[Route('/sortie/new', name: 'sortie_new', methods: ['GET','POST'])]
+    #[Route('/new', name: 'app_sortie_new', methods: ['GET','POST'])]
     #[IsGranted('ROLE_USER')]
     public function new(Request $request, EntityManagerInterface $em, EtatRepository $etatRepository): Response
     {
@@ -53,14 +54,23 @@ class SortieController extends AbstractController
             $em->persist($sortie);
             $em->flush();
 
-            return $this->redirectToRoute('sortie_index');
+            return $this->redirectToRoute('app_index');
         }
 
         $status = $form->isSubmitted() ? 422 : 200;
 
-        return $this->render('sortie/createSortie.html.twig', [
+        return $this->render('sortie/new.html.twig', [
             'form' => $form->createView(),
         ], new Response(status: $status));
+    }
+
+    #[Route('/sortie/{id}', name: 'app_sortie_show', requirements: ['id' => '\d+'])]
+    public function show(Sortie $sortie): Response
+    {
+        return $this->render('sortie/show.html.twig', [
+            's'  => $sortie,
+            'me' => $this->getUser(),
+        ]);
     }
 
 }
