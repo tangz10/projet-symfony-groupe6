@@ -157,6 +157,38 @@ class SortieController extends AbstractController
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
 
+    #[Route('/{id}/edit', name: 'app_sortie_edit', methods: ['GET','POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function edit(Sortie $sortie, Request $request, EntityManagerInterface $em): Response
+    {
+        $me = $this->getUser();
+
+        if (!$sortie->getParticipantOrganisateur() || $sortie->getParticipantOrganisateur()->getId() !== $me->getId()) {
+            $this->addFlash('error', 'Vous ne pouvez pas modifier cette sortie.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        if (!$sortie->getEtat() || $sortie->getEtat()->getLibelle() !== 'Créée') {
+            $this->addFlash('error', 'Seules les sorties à l’état "Créée" sont modifiables.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $form = $this->createForm(SortieType::class, $sortie);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->flush();
+            $this->addFlash('success', 'Sortie mise à jour.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        return $this->render('sortie/edit.html.twig', [
+            'form' => $form->createView(),
+            's'    => $sortie,
+            'me'   => $me,
+        ]);
+    }
+
     #[Route('/{id}/inscrire', name: 'app_sortie_inscrire', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function inscrire(
