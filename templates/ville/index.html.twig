@@ -3,35 +3,80 @@
 {% block title %}Ville index{% endblock %}
 
 {% block body %}
-    <h1>Ville index</h1>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Nom</th>
-                <th>CodePostal</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for ville in villes %}
-            <tr>
-                <td>{{ ville.id }}</td>
-                <td>{{ ville.nom }}</td>
-                <td>{{ ville.codePostal }}</td>
-                <td>
-                    <a href="{{ path('app_ville_show', {'id': ville.id}) }}">show</a>
-                    <a href="{{ path('app_ville_edit', {'id': ville.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="4">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <!-- component -->
+    <body class="antialiased font-sans bg-gray-200">
+    <div class="container mx-auto px-4 sm:px-8">
+        <div class="py-8">
+            <div>
+                <h2 class="text-2xl font-semibold leading-tight">Liste des villes</h2>
+            </div>
 
-    <a href="{{ path('app_ville_new') }}">Create new</a>
+            <!-- table -->
+            <div class="-mx-4 sm:-mx-8 px-4 sm:px-8 py-4 overflow-x-auto">
+                <div class="inline-block min-w-full shadow rounded-lg overflow-hidden">
+                    <table class="min-w-full leading-normal">
+                        <thead>
+                        <tr>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NOM</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">CODE POSTAL</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ACTIONS</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for ville in villes %}
+                            <tr class="bg-white border-b border-gray-200 hover:bg-gray-100">
+                                <td class="px-5 py-5 text-sm text-gray-900 whitespace-no-wrap">{{ ville.id }}</td>
+                                <td class="px-5 py-5 text-sm text-gray-900 whitespace-no-wrap">{{ ville.nom }}</td>
+                                <td class="px-5 py-5 text-sm text-gray-900 whitespace-no-wrap">{{ ville.codePostal }}</td>
+                                <td class="px-5 py-5 text-sm">
+                                    <div class="space-x-2 flex h-full">
+                                        <a href="{{ path('app_ville_show', {'id': ville.id}) }}" class="text-blue-600 hover:text-blue-900" title="Voir">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                                <circle cx="12" cy="12" r="3"/>
+                                            </svg>
+                                        </a>
+
+                                        <a href="{{ path('app_ville_edit', {'id': ville.id}) }}" class="text-green-600 hover:text-green-900" title="Modifier">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M12 20h9"/>
+                                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="px-5 py-5 text-center text-sm text-gray-500">Aucune ville trouvée</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- pagination -->
+                    <div class="px-5 py-5 bg-white border-t border-gray-300 flex flex-col xs:flex-row items-center xs:justify-between">
+                    <span class="text-xs xs:text-sm text-gray-900">
+                        Tu regardes {{ villes|length }} villes !
+                    </span>
+                        <div class="inline-flex mt-2 xs:mt-0">
+                            <button class="text-sm bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-l">Précédent</button>
+                            <button class="text-sm bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-r">Suivant</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- bouton création -->
+            <div class="mt-6">
+                <a href="{{ path('app_ville_new') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow">
+                    + Créer une nouvelle ville
+                </a>
+            </div>
+        </div>
+    </div>
+    </body>
+
 {% endblock %}
