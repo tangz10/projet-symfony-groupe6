@@ -52,6 +52,19 @@
                         </div>
 
                         <div class="mb-3 space-y-2 w-full text-xs">
+                            <label for="{{ registrationForm.Site.vars.id }}" class="font-semibold text-gray-600 py-2">
+                                Site <abbr title="required">*</abbr>
+                            </label>
+                            {{ form_widget(registrationForm.Site, {
+                                attr: {
+                                    class: 'block w-full bg-gray-100 text-gray-700 border border-gray-300 rounded-lg h-10 px-4 focus:border-purple-600 focus:ring-3 focus:ring-purple-600 outline-none'
+                                }
+                            }) }}
+                            {{ form_errors(registrationForm.Site) }}
+                        </div>
+
+
+                        <div class="mb-3 space-y-2 w-full text-xs">
                             <label for="{{ registrationForm.telephone.vars.id }}" class="font-semibold text-gray-600 py-2">Téléphone</label>
                             {{ form_widget(registrationForm.telephone, {
                                 'attr': {'class': 'appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-300 rounded-lg h-10 px-4 focus:border-purple-600 focus:ring-3 focus:ring-purple-600 outline-none'}

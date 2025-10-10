@@ -23,10 +23,11 @@ class ParticipantType extends AbstractType
             ->add('telephone')
             ->add('administrateur')
             ->add('actif')
-            /* ->add('Site', EntityType::class, [
+            ->add('site', EntityType::class, [
                 'class' => Site::class,
-                'choice_label' => 'id',
+                'choice_label' => 'nom',
             ])
+            /*
             ->add('ParticipantsInscrits', EntityType::class, [
                 'class' => Sortie::class,
                 'choice_label' => 'id',

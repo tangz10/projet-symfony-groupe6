@@ -75,9 +75,18 @@ final class ParticipantController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            if ($participant->isAdministrateur() === true) {
+                $participant->setRoles(['ROLE_ADMIN']);
+            } else {
+                $participant->setRoles(['ROLE_USER']);
+            }
+
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_participant_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_participant_show', [
+                'id' => $participant->getId(),
+            ], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('participant/edit.html.twig', [
