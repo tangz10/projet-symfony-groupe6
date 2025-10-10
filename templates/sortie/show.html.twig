@@ -133,11 +133,6 @@
                             <span class="w-48 text-base text-gray-600">État :</span>
                             <span class="text-gray-900 text-base">{{ s.etat ? s.etat.libelle : '—' }}</span>
                         </div>
-
-                        <div class="flex flex-col gap-1">
-                            <span class="text-base text-gray-600">Description et infos :</span>
-                            <span class="text-gray-900 break-words text-base">{{ s.infosSortie ?: '—' }}</span>
-                        </div>
                     </div>
 
                     <div class="space-y-4">
@@ -171,6 +166,11 @@
                             <span class="text-gray-900 text-base">{{ s.lieu ? s.lieu.longitude : '—' }}</span>
                         </div>
                     </div>
+
+                </div>
+                <div class="flex flex-col mt-4">
+                    <span class="text-sm text-gray-600">Description et infos :</span>
+                    <span class="text-gray-900 break-words mt-2">{{ s.infosSortie ?: '—' }}</span>
                 </div>
 
                 <div class="mt-6 mb-6">
@@ -266,7 +266,6 @@
                         {% endif %}
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
