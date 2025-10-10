@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Psr\Log\LoggerInterface;
 
 #[Route('/sortie')]
 class SortieController extends AbstractController
@@ -153,6 +154,131 @@ class SortieController extends AbstractController
         $em->flush();
 
         $this->addFlash('success', 'La sortie a été publiée (ouverte aux inscriptions).');
+        return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+    }
+
+    #[Route('/{id}/inscrire', name: 'app_sortie_inscrire', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function inscrire(
+        Sortie $sortie,
+        Request $request,
+        EntityManagerInterface $em
+    ): Response {
+        // Validation du token CSRF
+        if (!$this->isCsrfTokenValid('inscrire'.$sortie->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $user = $this->getUser();
+
+        // Vérifier que l'utilisateur est bien un Participant
+        if (!$user instanceof \App\Entity\Participant) {
+            throw $this->createAccessDeniedException('Utilisateur non valide.');
+        }
+
+        $participantId = $user->getId();
+
+        // Vérifier que l'état est "Ouverte" (insensible à la casse)
+        if (!$sortie->getEtat() || strtolower(trim($sortie->getEtat()->getLibelle())) !== 'ouverte') {
+            $this->addFlash('error', 'Cette sortie n\'est pas ouverte à l\'inscription pour l\'instant. État actuel : ' . ($sortie->getEtat() ? $sortie->getEtat()->getLibelle() : 'null'));
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        // Vérifier que le participant n'est pas déjà inscrit (requête SQL directe)
+        $conn = $em->getConnection();
+        $sql = 'SELECT COUNT(*) as count FROM sortie_participant WHERE sortie_id = :sortie_id AND participant_id = :participant_id';
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery(['sortie_id' => $sortie->getId(), 'participant_id' => $participantId]);
+        $alreadyRegistered = $result->fetchOne() > 0;
+
+        if ($alreadyRegistered) {
+            $this->addFlash('warning', 'Vous êtes déjà inscrit à cette sortie.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        // Vérifier le nombre max d'inscrits
+        $sqlCount = 'SELECT COUNT(*) as count FROM sortie_participant WHERE sortie_id = :sortie_id';
+        $stmtCount = $conn->prepare($sqlCount);
+        $resultCount = $stmtCount->executeQuery(['sortie_id' => $sortie->getId()]);
+        $currentCount = $resultCount->fetchOne();
+
+        if ($currentCount >= $sortie->getNbInscriptionsMax()) {
+            $this->addFlash('error', 'Cette sortie est complète.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        // Vérifier la date limite d'inscription
+        $now = new \DateTime();
+        if ($sortie->getDateLimiteInscription() && $sortie->getDateLimiteInscription() < $now) {
+            $this->addFlash('error', 'La date limite d\'inscription est dépassée.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        try {
+            // INSERT DIRECT dans la table de jointure (contournement du problème Doctrine)
+            $sqlInsert = 'INSERT INTO sortie_participant (sortie_id, participant_id) VALUES (:sortie_id, :participant_id)';
+            $stmtInsert = $conn->prepare($sqlInsert);
+            $stmtInsert->executeStatement([
+                'sortie_id' => $sortie->getId(),
+                'participant_id' => $participantId
+            ]);
+
+            $this->addFlash('success', 'Inscription réussie !');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de l\'inscription : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+    }
+
+    #[Route('/{id}/desister', name: 'app_sortie_desister', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function desister(
+        Sortie $sortie,
+        Request $request,
+        EntityManagerInterface $em
+    ): Response {
+        // Validation du token CSRF
+        if (!$this->isCsrfTokenValid('desister'.$sortie->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $user = $this->getUser();
+
+        // Vérifier que l'utilisateur est bien un Participant
+        if (!$user instanceof \App\Entity\Participant) {
+            throw $this->createAccessDeniedException('Utilisateur non valide.');
+        }
+
+        // CRUCIAL : Récupérer le participant depuis la base pour avoir une entité managée
+        $participant = $em->getRepository(\App\Entity\Participant::class)->find($user->getId());
+
+        if (!$participant) {
+            throw $this->createNotFoundException('Participant introuvable.');
+        }
+
+        // Vérifier que le participant est bien inscrit
+        if (!$sortie->getParticipantInscrit()->contains($participant)) {
+            $this->addFlash('warning', 'Vous n\'êtes pas inscrit à cette sortie.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        // Vérifier que la sortie n'a pas déjà commencé
+        $now = new \DateTime();
+        if ($sortie->getDateHeureDebut() && $sortie->getDateHeureDebut() <= $now) {
+            $this->addFlash('error', 'La sortie a déjà commencé, vous ne pouvez plus vous désister.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        // Retirer l'inscription
+        $sortie->removeParticipantInscrit($participant);
+
+        // Flush pour persister la modification
+        $em->flush();
+
+        $this->addFlash('success', 'Vous vous êtes désisté de cette sortie.');
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
 }
