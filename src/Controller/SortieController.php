@@ -65,9 +65,27 @@ class SortieController extends AbstractController
         ], new Response(status: $status));
     }
 
-    #[Route('/{id}', name: 'app_sortie_show', requirements: ['id' => '\d+'])]
-    public function show(Sortie $sortie): Response
-    {
+    #[Route('/sortie/{id}', name: 'app_sortie_show', methods: ['GET'])]
+    public function show(
+        Sortie $sortie,
+        EtatRepository $etatRepository,
+        EntityManagerInterface $em
+    ): Response {
+        $now = new \DateTimeImmutable();
+
+        $lib = $sortie->getEtat()?->getLibelle();
+
+        if ($lib !== 'Annulée'
+            && $sortie->getDateLimiteInscription()
+            && $sortie->getDateLimiteInscription() <= $now
+            && in_array($lib, ['Créée', 'Ouverte'], true)) {
+
+            if ($etatCloturee = $etatRepository->findOneBy(['libelle' => 'Clôturée'])) {
+                $sortie->setEtat($etatCloturee);
+                $em->flush();
+            }
+        }
+
         return $this->render('sortie/show.html.twig', [
             's'  => $sortie,
             'me' => $this->getUser(),
