@@ -1,113 +1,110 @@
+{# templates/lieu/index.html.twig #}
 {% extends 'base.html.twig' %}
 
-{% block title %}Lieu index{% endblock %}
+{% block title %}Liste des lieux{% endblock %}
 
 {% block body %}
-
-    <!-- component -->
-    <body class="antialiased font-sans bg-gray-200">
-    <div class="container mx-auto px-4 sm:px-8">
-        <div class="py-8">
-            <div>
-                <h2 class="text-2xl font-semibold leading-tight">Liste des lieux</h2>
-            </div>
-
-            <!-- filtres et recherche -->
-            <div class="my-2 flex sm:flex-row flex-col">
-                <div class="flex flex-row mb-1 sm:mb-0">
-                    <div class="relative">
-                        <select class="appearance-none h-full rounded-l border block w-full bg-white border-gray-400 text-gray-700 py-2 px-4 pr-8 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                            <option>5</option>
-                            <option>10</option>
-                            <option>20</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg class="fill-current h-4 w-4" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                            </svg>
-                        </div>
-                    </div>
+    <div class="min-h-screen bg-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="mb-8 flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Liste des lieux</h1>
+                    <p class="mt-2 text-sm text-gray-600">Gérez vos lieux et leurs informations</p>
                 </div>
-
-                <div class="block relative">
-                <span class="h-full absolute inset-y-0 left-0 flex items-center pl-2">
-                    <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current text-gray-500">
-                        <path d="M10 4a6 6 0 100 12 6 6 0 000-12zm-8 6a8 8 0 1114.32 4.906l5.387 5.387a1 1 0 01-1.414 1.414l-5.387-5.387A8 8 0 012 10z"></path>
+                <a href="{{ path('app_lieu_new') }}"
+                   class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
-                </span>
-                    <input placeholder="Rechercher un lieu" class="appearance-none rounded-r rounded-l sm:rounded-l-none border border-gray-400 border-b block pl-8 pr-6 py-2 w-full bg-white text-sm placeholder-gray-400 text-gray-700 focus:bg-white focus:placeholder-gray-600 focus:text-gray-700 focus:outline-none" />
-                </div>
+                    Ajouter un lieu
+                </a>
             </div>
 
-            <!-- table -->
-            <div class="-mx-4 sm:-mx-8 px-4 sm:px-8 py-4 overflow-x-auto">
-                <div class="inline-block min-w-full shadow rounded-lg overflow-hidden">
-                    <table class="min-w-full leading-normal">
+            <!-- Card principale -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
                         <thead>
-                        <tr>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NOM</th>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">RUE</th>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">LATITUDE</th>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">LONGITUDE</th>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ACTIONS</th>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rue</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latitude</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Longitude</th>
+                            <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-gray-100">
                         {% for lieu in lieus %}
-                            <tr class="bg-white border-b border-gray-200 hover:bg-gray-100">
-                                <td class="px-5 py-5 text-sm text-gray-900 whitespace-no-wrap">{{ lieu.id }}</td>
-                                <td class="px-5 py-5 text-sm text-gray-900 whitespace-no-wrap">{{ lieu.nom }}</td>
-                                <td class="px-5 py-5 text-sm text-gray-900 whitespace-no-wrap">{{ lieu.rue }}</td>
-                                <td class="px-5 py-5 text-sm text-gray-900 whitespace-no-wrap">{{ lieu.latitude }}</td>
-                                <td class="px-5 py-5 text-sm text-gray-900 whitespace-no-wrap">{{ lieu.longitude }}</td>
-                                <td class="px-5 py-5 text-sm">
-                                    <div class="space-x-2 flex h-full">
-                                        <a href="{{ path('app_lieu_show', {'id': lieu.id}) }}" class="text-blue-600 hover:text-blue-900" title="Voir">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                                <circle cx="12" cy="12" r="3"/>
+                            <tr class="hover:bg-gray-50 transition-all duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ lieu.id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ lieu.nom }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ lieu.rue }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-3 py-1 text-sm text-purple-600 bg-purple-50 rounded-full font-medium">
+                                    {{ lieu.latitude }}
+                                </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-3 py-1 text-sm text-purple-600 bg-purple-50 rounded-full font-medium">
+                                    {{ lieu.longitude }}
+                                </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex items-center justify-end space-x-4">
+                                        <a href="{{ path('app_lieu_edit', {'id': lieu.id}) }}"
+                                           class="text-gray-400 hover:text-purple-600 transition-colors duration-200">
+                                            <span class="sr-only">Modifier</span>
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                             </svg>
                                         </a>
-
-                                        <a href="{{ path('app_lieu_edit', {'id': lieu.id}) }}" class="text-green-600 hover:text-green-900" title="Modifier">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M12 20h9"/>
-                                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
-                                            </svg>
-                                        </a>
+                                        {{ include('lieu/_delete_form.html.twig', {'button_class':
+                                            'text-gray-400 hover:text-red-600 transition-colors duration-200'
+                                        }) }}
                                     </div>
                                 </td>
                             </tr>
                         {% else %}
                             <tr>
-                                <td colspan="6" class="px-5 py-5 text-center text-sm text-gray-500">Aucun lieu trouvé</td>
+                                <td colspan="6" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <svg class="w-12 h-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2zM12 7v10m5-5H7"/>
+                                        </svg>
+                                        <p class="text-gray-500">Aucun lieu trouvé</p>
+                                    </div>
+                                </td>
                             </tr>
                         {% endfor %}
                         </tbody>
                     </table>
+                </div>
 
-                    <!-- pagination -->
-                    <div class="px-5 py-5 bg-white border-t border-gray-300 flex flex-col xs:flex-row items-center xs:justify-between">
-                    <span class="text-xs xs:text-sm text-gray-900">
-                        Tu regardes {{ lieus|length }} lieux !
-                    </span>
-                        <div class="inline-flex mt-2 xs:mt-0">
-                            <button class="text-sm bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-l">Précédent</button>
-                            <button class="text-sm bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-r">Suivant</button>
+                <!-- Pagination -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm text-gray-600">
+                            {{ lieus|length }} lieu(x) au total
+                        </p>
+                        <div class="flex items-center space-x-2">
+                            <button class="inline-flex items-center px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:text-purple-600 hover:border-purple-300 border border-gray-300 rounded-lg shadow-sm transition-all duration-200">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                                Précédent
+                            </button>
+                            <button class="inline-flex items-center px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:text-purple-600 hover:border-purple-300 border border-gray-300 rounded-lg shadow-sm transition-all duration-200">
+                                Suivant
+                                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- bouton création -->
-            <div class="mt-6">
-                <a href="{{ path('app_lieu_new') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow">
-                    + Créer un nouveau lieu
-                </a>
-            </div>
         </div>
     </div>
-    </body>
-
 {% endblock %}
