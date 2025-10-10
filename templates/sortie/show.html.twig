@@ -9,8 +9,30 @@
     <div class="flex-1 overflow-y-auto">
         <div class="max-w-7xl mx-auto px-4 py-4">
             <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 md:p-8">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-                    <h1 class="text-3xl md:text-4xl font-semibold text-gray-800">Afficher une sortie</h1>
+                {% set isAnnulee = s.etat and s.etat.libelle == 'Annulée' %}
+                {% set isOuverte = s.etat and s.etat.libelle == 'Ouverte' %}
+                {% set isCreee = s.etat and s.etat.libelle == 'Créée' %}
+                {% set isOrganisateur = me and s.participantOrganisateur and me.id == s.participantOrganisateur.id %}
+                {% set inscrit = me ? s.participantInscrit.contains(me) : false %}
+
+                <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800">
+                            Afficher une sortie
+                        </h1>
+
+                        {% if isOrganisateur and isCreee %}
+                            <a href="{{ path('app_sortie_edit', {'id': s.id}) }}"
+                               class="inline-flex items-center justify-center w-10 h-10 rounded-full border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition"
+                               title="Modifier la sortie">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12.3 6.3l5.4 5.4M14 4.6l2.8-2.8a2 2 0 112.8 2.8L8.6 15.6 4 16l.4-4.6L14 4.6z"
+                                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </a>
+                        {% endif %}
+                    </div>
+
                     <a href="{{ path('app_sortie_index') }}"
                        class="inline-flex items-center h-11 px-5 rounded-full bg-purple-600 text-white hover:bg-purple-700 shadow">
                         ← Retour à la liste
@@ -51,12 +73,6 @@
                     {% endfor %}
                 {% endfor %}
 
-                {% set isAnnulee = s.etat and s.etat.libelle == 'Annulée' %}
-                {% set isOuverte = s.etat and s.etat.libelle == 'Ouverte' %}
-                {% set isCreee = s.etat and s.etat.libelle == 'Créée' %}
-                {% set isOrganisateur = me and s.participantOrganisateur and me.id == s.participantOrganisateur.id %}
-                {% set inscrit = me ? s.participantInscrit.contains(me) : false %}
-
                 {% if isAnnulee %}
                     <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4">
                         <div class="flex items-start gap-3">
@@ -79,6 +95,7 @@
                 {% endif %}
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
+                    {# Colonne 1 #}
                     <div class="space-y-4">
                         <div class="flex items-baseline gap-2">
                             <span class="w-48 text-base text-gray-600">Nom de la sortie :</span>
@@ -87,35 +104,41 @@
 
                         <div class="flex items-baseline gap-2">
                             <span class="w-48 text-base text-gray-600">Date et heure de la sortie :</span>
-                            <span class="text-gray-900 text-base">{{ s.dateHeureDebut ? s.dateHeureDebut|date('d/m/Y H:i') : '—' }}</span>
+                            <span class="text-gray-900 text-base">
+        {{ s.dateHeureDebut ? s.dateHeureDebut|date('d/m/Y H:i') : '—' }}
+      </span>
                         </div>
 
                         <div class="flex items-baseline gap-2">
                             <span class="w-48 text-base text-gray-600">Date limite d'inscription :</span>
-                            <span class="text-gray-900 text-base">{{ s.dateLimiteInscription ? s.dateLimiteInscription|date('d/m/Y') : '—' }}</span>
+                            <span class="text-gray-900 text-base">
+        {{ s.dateLimiteInscription ? s.dateLimiteInscription|date('d/m/Y') : '—' }}
+      </span>
                         </div>
 
                         <div class="flex items-baseline gap-2">
                             <span class="w-48 text-base text-gray-600">Nombre de places :</span>
-                            <span class="text-gray-900 text-base">{{ s.nbInscriptionsMax is not null ? s.nbInscriptionsMax : '—' }}</span>
+                            <span class="text-gray-900 text-base">
+        {{ s.nbInscriptionsMax is not null ? s.nbInscriptionsMax : '—' }}
+      </span>
                         </div>
 
                         <div class="flex items-baseline gap-2">
                             <span class="w-48 text-base text-gray-600">Durée :</span>
-                            <span class="text-gray-900 text-base">{{ s.duree is not null ? s.duree ~ ' minutes' : '—' }}</span>
+                            <span class="text-gray-900 text-base">
+        {{ s.duree is not null ? s.duree ~ ' minutes' : '—' }}
+      </span>
                         </div>
 
                         <div class="flex items-baseline gap-2">
                             <span class="w-48 text-base text-gray-600">État :</span>
-                            <span class="text-gray-900 text-base">{{ s.etat ? s.etat.libelle : '—' }}</span>
-                        </div>
-
-                        <div class="flex flex-col gap-1">
-                            <span class="text-base text-gray-600">Description et infos :</span>
-                            <span class="text-gray-900 break-words text-base">{{ s.infosSortie ?: '—' }}</span>
+                            <span class="text-gray-900 text-base">
+        {{ s.etat ? s.etat.libelle : '—' }}
+      </span>
                         </div>
                     </div>
 
+                    {# Colonne 2 — GARDE TOUT ICI #}
                     <div class="space-y-4">
                         <div class="flex items-baseline gap-2">
                             <span class="w-44 text-base text-gray-600">Lieu :</span>
@@ -147,6 +170,12 @@
                             <span class="text-gray-900 text-base">{{ s.lieu ? s.lieu.longitude : '—' }}</span>
                         </div>
                     </div>
+                </div>
+
+                {# description en-dessous de la grille #}
+                <div class="flex flex-col mt-4">
+                    <span class="w-44 text-base text-gray-600">Description et infos :</span>
+                    <span class="text-gray-900 break-words mt-2">{{ s.infosSortie ?: '—' }}</span>
                 </div>
 
                 <div class="mt-6 mb-6">
@@ -206,20 +235,22 @@
                         {% if isOrganisateur and not isAnnulee and isCreee %}
                             <form method="post" action="{{ path('app_sortie_publier', {'id': s.id}) }}">
                                 <input type="hidden" name="_token" value="{{ csrf_token('publish' ~ s.id) }}">
-                                <button class="h-11 px-6 rounded-full bg-green-700 text-white hover:bg-green-800 shadow">
+                                <button class="h-11 px-6 rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
                                     Publier
                                 </button>
                             </form>
 
-                            <button type="button" class="h-11 px-6 rounded-full bg-red-700 text-white hover:bg-red-800 shadow"
+                            <button type="button" class="h-11 px-6 rounded-full border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 shadow-sm"
                                     onclick="document.getElementById('modal-annulation').classList.remove('hidden')">
                                 Annuler la sortie
                             </button>
+                        {% endif %}
 
-                            <div id="modal-annulation" class="hidden fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-                                <div class="bg-white rounded-2xl shadow-xl p-6 w-96 text-center">
-                                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Confirmer l'annulation</h2>
-                                    <p class="text-gray-600 mb-4">Vous pouvez indiquer un motif d'annulation :</p>
+                    {% if isOrganisateur and not isAnnulee and (s.dateHeureDebut is empty or s.dateHeureDebut > 'now'|date) %}
+                        <div id="modal-annulation" class="hidden fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+                            <div class="bg-white rounded-2xl shadow-xl p-6 w-96 text-center">
+                                <h2 class="text-lg font-semibold text-gray-800 mb-3">Confirmer l’annulation</h2>
+                                <p class="text-gray-600 mb-4">Vous pouvez indiquer un motif d’annulation :</p>
 
                                     <form method="post" action="{{ path('app_sortie_annuler', {'id': s.id}) }}" class="space-y-4">
                                         <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ s.id) }}">
@@ -241,7 +272,7 @@
                         {% endif %}
                     </div>
                 </div>
+
             </div>
         </div>
-    </div>
 {% endblock %}
