@@ -12,8 +12,12 @@
                 {% set isAnnulee = s.etat and s.etat.libelle == 'Annulée' %}
                 {% set isOuverte = s.etat and s.etat.libelle == 'Ouverte' %}
                 {% set isCreee = s.etat and s.etat.libelle == 'Créée' %}
+                {% set isCloturee = s.etat and s.etat.libelle == 'Clôturée' %}
+                {% set isPassee = s.etat and s.etat.libelle == 'Passée' %}
+                {% set isEnCours = s.etat and s.etat.libelle == 'En cours' %}
                 {% set isOrganisateur = me and s.participantOrganisateur and me.id == s.participantOrganisateur.id %}
                 {% set inscrit = me ? s.participantInscrit.contains(me) : false %}
+                {% set afterClosure = s.dateLimiteInscription and s.dateLimiteInscription <= 'now'|date %}
 
                 <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
                     <div class="flex items-center gap-3">
@@ -42,7 +46,7 @@
                 {# Messages flash DANS la card, juste sous le titre #}
                 {% for label, messages in app.flashes %}
                     {% for message in messages %}
-                        <div class="flash-message mb-4 rounded-xl p-4 animate-fade-in {% if label == 'success' %}bg-green-50 border border-green-200{% elseif label == 'error' %}bg-red-50 border border-red-200{% endif %}">
+                        <div class="flash-message mb-4 rounded-xl p-4 animate-fade-in {% if label == 'success' %} bg-green-50 border border-green-200 {% elseif label == 'error' %}bg-red-50 border border-red-200{% endif %}">
                             <div class="flex items-start gap-3">
                                 <div class="mt-0.5">
                                     {% if label == 'success' %}
@@ -133,8 +137,8 @@
                         <div class="flex items-baseline gap-2">
                             <span class="w-48 text-base text-gray-600">État :</span>
                             <span class="text-gray-900 text-base">
-        {{ s.etat ? s.etat.libelle : '—' }}
-      </span>
+                                {{ s.etat ? s.etat.libelle : '—' }}
+                              </span>
                         </div>
                     </div>
 
@@ -211,23 +215,39 @@
                     {% set isOuverte = s.etat and (s.etat.libelle|trim|lower == 'ouverte') %}
                     <div class="mt-6 flex flex-col sm:flex-row justify-center gap-4">
                         {% if me and not isOrganisateur %}
-                            {% if not inscrit and isOuverte and not isAnnulee %}
+                            {% if not afterClosure and not isAnnulee and isOuverte and not inscrit %}
                                 <form method="post" action="{{ path('app_sortie_inscrire', {id: s.id}) }}" style="display:inline;">
                                     <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ s.id) }}">
                                     <button type="submit" class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
                                         S'inscrire
                                     </button>
                                 </form>
-                            {% elseif inscrit and not isAnnulee %}
+                            {% elseif not afterClosure and not isAnnulee and isOuverte and inscrit %}
                                 <form method="post" action="{{ path('app_sortie_desister', {id: s.id}) }}" style="display:inline;">
                                     <input type="hidden" name="_token" value="{{ csrf_token('desister' ~ s.id) }}">
                                     <button type="submit" class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
                                         Se désister
                                     </button>
                                 </form>
-                            {% elseif not isOuverte and not isAnnulee %}
+                            {% elseif isCreee %}
                                 <p class="text-base text-gray-600 italic">
                                     Cette sortie n'est pas ouverte à l'inscription pour l'instant.
+                                </p>
+                            {% elseif isCloturee %}
+                                <p class="text-base text-gray-600 italic">
+                                    La date d'inscription est dépassée.
+                                </p>
+                            {% elseif isAnnulee %}
+                                <p class="text-base text-gray-600 italic">
+                                    Cette sortie a été annulée.
+                                </p>
+                            {% elseif isPassee %}
+                                <p class="text-base text-gray-600 italic">
+                                    Cette sortie est déjà passée.
+                                </p>
+                            {% elseif isEnCours %}
+                                <p class="text-base text-gray-600 italic">
+                                    Cette sortie est déjà en cours.
                                 </p>
                             {% endif %}
                         {% endif %}
