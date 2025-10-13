@@ -65,6 +65,9 @@ class Sortie
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $motifAnnulation = null;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $archivee = false;
+
     /**
      * @var Collection<int, Note>
      */
@@ -84,6 +87,16 @@ class Sortie
         $this->note = new ArrayCollection();
     }
 
+    public function isArchivee(): bool
+    {
+        return $this->archivee;
+    }
+
+    public function setArchivee(bool $archivee): self
+    {
+        $this->archivee = $archivee;
+        return $this;
+    }
     public function getId(): ?int
     {
         return $this->id;
