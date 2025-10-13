@@ -82,6 +82,11 @@ final class ParticipantController extends AbstractController
                 $participant->setRoles(['ROLE_USER']);
             }
 
+            if ($request->request->get('delete_photo') === '1') {
+                $participant->setPhotoProfilFile(null);
+                $participant->setPhotoProfil(null);
+            }
+
             $entityManager->flush();
 
             return $this->redirectToRoute('app_participant_show', [

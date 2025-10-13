@@ -28,13 +28,12 @@ class ParticipantType extends AbstractType
             ->add('telephone')
             ->add('photoProfilFile', VichImageType::class, [
                 'required' => false,
-                'allow_delete' => true,
-                'delete_label' => 'Supprimer la photo',
+                'allow_delete' => false,
                 'download_uri' => false,
-                'image_uri' => true,
-                'asset_helper' => true,
+                'image_uri' => false,
                 'label' => 'Photo de profil'
             ])
+
             ->add('administrateur')
             ->add('actif')
             ->add('site', EntityType::class, [
