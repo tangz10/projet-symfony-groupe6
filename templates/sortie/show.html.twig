@@ -2,7 +2,6 @@
 
 {% block title %}Afficher une sortie{% endblock %}
 
-{# On désactive l'affichage global des flashs pour cette page #}
 {% block flash_messages %}{% endblock %}
 
 {% block body %}
@@ -18,6 +17,10 @@
                 {% set isOrganisateur = me and s.participantOrganisateur and me.id == s.participantOrganisateur.id %}
                 {% set inscrit = me ? s.participantInscrit.contains(me) : false %}
                 {% set afterClosure = s.dateLimiteInscription and s.dateLimiteInscription <= 'now'|date %}
+                {% set inscritsCount = s.participantInscrit|length %}
+                {% set isComplet = s.nbInscriptionsMax is not null and inscritsCount >= s.nbInscriptionsMax %}
+                {% set beforeStart = s.dateHeureDebut is empty or s.dateHeureDebut > 'now'|date %}
+                {% set isAdmin = is_granted('ROLE_ADMIN') %}
 
                 <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
                     <div class="flex items-center gap-3">
@@ -43,7 +46,6 @@
                     </a>
                 </div>
 
-                {# Messages flash DANS la card, juste sous le titre #}
                 {% for label, messages in app.flashes %}
                     {% for message in messages %}
                         <div class="flash-message mb-4 rounded-xl p-4 animate-fade-in {% if label == 'success' %} bg-green-50 border border-green-200 {% elseif label == 'error' %}bg-red-50 border border-red-200{% endif %}">
@@ -218,40 +220,36 @@
                     {% set isOuverte = s.etat and (s.etat.libelle|trim|lower == 'ouverte') %}
                     <div class="mt-6 flex flex-col sm:flex-row justify-center gap-4">
                         {% if me and not isOrganisateur %}
-                            {% if not afterClosure and not isAnnulee and isOuverte and not inscrit %}
+                            {% if isOuverte and not afterClosure and not isEnCours and not isCloturee and not isAnnulee and not inscrit and not isComplet %}
                                 <form method="post" action="{{ path('app_sortie_inscrire', {id: s.id}) }}" style="display:inline;">
                                     <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ s.id) }}">
                                     <button type="submit" class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
                                         S'inscrire
                                     </button>
                                 </form>
-                            {% elseif not afterClosure and not isAnnulee and isOuverte and inscrit %}
+                            {% elseif inscrit and not isAnnulee and not isEnCours and not isCloturee and beforeStart %}
                                 <form method="post" action="{{ path('app_sortie_desister', {id: s.id}) }}" style="display:inline;">
                                     <input type="hidden" name="_token" value="{{ csrf_token('desister' ~ s.id) }}">
                                     <button type="submit" class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
                                         Se désister
                                     </button>
                                 </form>
-                            {% elseif isCreee %}
-                                <p class="text-base text-gray-600 italic">
-                                    Cette sortie n'est pas ouverte à l'inscription pour l'instant.
-                                </p>
-                            {% elseif isCloturee %}
-                                <p class="text-base text-gray-600 italic">
-                                    La date d'inscription est dépassée.
-                                </p>
-                            {% elseif isAnnulee %}
-                                <p class="text-base text-gray-600 italic">
-                                    Cette sortie a été annulée.
-                                </p>
-                            {% elseif isPassee %}
-                                <p class="text-base text-gray-600 italic">
-                                    Cette sortie est déjà passée.
-                                </p>
-                            {% elseif isEnCours %}
-                                <p class="text-base text-gray-600 italic">
-                                    Cette sortie est déjà en cours.
-                                </p>
+                            {% else %}
+                                {% if isAnnulee %}
+                                    <p class="text-base text-gray-600 italic">Cette sortie a été annulée.</p>
+                                {% elseif isComplet %}
+                                    <p class="text-base text-gray-600 italic">La sortie est complète.</p>
+                                {% elseif not beforeStart == false and not isCreee %}
+                                    <p class="text-base text-gray-600 italic">La sortie a déjà commencé.</p>
+                                {% elseif afterClosure or isCloturee %}
+                                    <p class="text-base text-gray-600 italic">La date d'inscription est dépassée.</p>
+                                {% elseif isPassee %}
+                                    <p class="text-base text-gray-600 italic">Cette sortie est déjà passée.</p>
+                                {% elseif isEnCours %}
+                                    <p class="text-base text-gray-600 italic">Cette sortie est déjà en cours.</p>
+                                {% elseif isCreee and not isAdmin %}
+                                    <p class="text-base text-gray-600 italic">Cette sortie n'est pas encore ouverte aux inscriptions.</p>
+                                {% endif %}
                             {% endif %}
                         {% endif %}
 
@@ -262,37 +260,38 @@
                                     Publier
                                 </button>
                             </form>
-
-                            <button type="button" class="h-11 px-6 rounded-full border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 shadow-sm"
-                                    onclick="document.getElementById('modal-annulation').classList.remove('hidden')">
-                                Annuler la sortie
-                            </button>
+                        {% endif %}
+                        {% if (isOrganisateur or isAdmin) and not isAnnulee and isCreee %}
+                            <form method="post" action="{{ path('app_sortie_annuler', {'id': s.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ s.id) }}">
+                                <button type="submit"
+                                        class="h-11 px-6 rounded-full border border-red-600 text-red-600 bg-white hover:bg-red-50 shadow-sm">
+                                    Annuler la sortie
+                                </button>
+                            </form>
                         {% endif %}
 
-                    {% if isOrganisateur and not isAnnulee and (s.dateHeureDebut is empty or s.dateHeureDebut > 'now'|date) %}
                         <div id="modal-annulation" class="hidden fixed inset-0 flex items-center justify-center bg-black/60 z-50">
                             <div class="bg-white rounded-2xl shadow-xl p-6 w-96 text-center">
                                 <h2 class="text-lg font-semibold text-gray-800 mb-3">Confirmer l’annulation</h2>
                                 <p class="text-gray-600 mb-4">Vous pouvez indiquer un motif d’annulation :</p>
+                                <form method="post" action="{{ path('app_sortie_annuler', {'id': s.id}) }}" class="space-y-4">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ s.id) }}">
+                                    <textarea name="motif" rows="3" placeholder="Motif d'annulation (facultatif)"
+                                              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-red-600 focus:outline-none"></textarea>
 
-                                    <form method="post" action="{{ path('app_sortie_annuler', {'id': s.id}) }}" class="space-y-4">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ s.id) }}">
-                                        <textarea name="motif" rows="3" placeholder="Motif d'annulation (facultatif)"
-                                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-red-600 focus:outline-none"></textarea>
-
-                                        <div class="flex justify-center gap-4">
-                                            <button type="submit" class="px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800">
-                                                Oui, annuler
-                                            </button>
-                                            <button type="button" onclick="document.getElementById('modal-annulation').classList.add('hidden')"
-                                                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
-                                                Annuler
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
+                                    <div class="flex justify-center gap-4">
+                                        <button type="submit" class="px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800">
+                                            Oui, annuler
+                                        </button>
+                                        <button type="button" onclick="document.getElementById('modal-annulation').classList.add('hidden')"
+                                                class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                                            Annuler
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                        {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>

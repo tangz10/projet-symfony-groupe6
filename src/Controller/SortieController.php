@@ -106,8 +106,16 @@ class SortieController extends AbstractController
         }
 
         $me = $this->getUser();
+        if (!$me instanceof \App\Entity\Participant) {
+            throw $this->createAccessDeniedException('Utilisateur non valide.');
+        }
 
-        if (!$sortie->getParticipantOrganisateur() || $sortie->getParticipantOrganisateur()->getId() !== $me->getId()) {
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+
+        $isOrganisateur = $sortie->getParticipantOrganisateur()
+            && $sortie->getParticipantOrganisateur()->getId() === $me->getId();
+
+        if (!($isAdmin || $isOrganisateur)) {
             $this->addFlash('error', 'Vous ne pouvez pas annuler cette sortie.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
@@ -134,7 +142,6 @@ class SortieController extends AbstractController
 
         $em->flush();
 
-        $this->addFlash('success', 'La sortie a été annulée.');
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
 
@@ -180,9 +187,9 @@ class SortieController extends AbstractController
     public function inscrire(
         Sortie $sortie,
         Request $request,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        EtatRepository $etatRepo
     ): Response {
-        // Validation du token CSRF
         if (!$this->isCsrfTokenValid('inscrire'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
@@ -190,20 +197,17 @@ class SortieController extends AbstractController
 
         $user = $this->getUser();
 
-        // Vérifier que l'utilisateur est bien un Participant
         if (!$user instanceof \App\Entity\Participant) {
             throw $this->createAccessDeniedException('Utilisateur non valide.');
         }
 
         $participantId = $user->getId();
 
-        // Vérifier que l'état est "Ouverte" (insensible à la casse)
         if (!$sortie->getEtat() || strtolower(trim($sortie->getEtat()->getLibelle())) !== 'ouverte') {
             $this->addFlash('error', 'Cette sortie n\'est pas ouverte à l\'inscription pour l\'instant. État actuel : ' . ($sortie->getEtat() ? $sortie->getEtat()->getLibelle() : 'null'));
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
-        // Vérifier que le participant n'est pas déjà inscrit (requête SQL directe)
         $conn = $em->getConnection();
         $sql = 'SELECT COUNT(*) as count FROM sortie_participant WHERE sortie_id = :sortie_id AND participant_id = :participant_id';
         $stmt = $conn->prepare($sql);
@@ -215,7 +219,6 @@ class SortieController extends AbstractController
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
-        // Vérifier le nombre max d'inscrits
         $sqlCount = 'SELECT COUNT(*) as count FROM sortie_participant WHERE sortie_id = :sortie_id';
         $stmtCount = $conn->prepare($sqlCount);
         $resultCount = $stmtCount->executeQuery(['sortie_id' => $sortie->getId()]);
@@ -226,7 +229,6 @@ class SortieController extends AbstractController
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
-        // Vérifier la date limite d'inscription
         $now = new \DateTime();
         if ($sortie->getDateLimiteInscription() && $sortie->getDateLimiteInscription() < $now) {
             $this->addFlash('error', 'La date limite d\'inscription est dépassée.');
@@ -234,13 +236,23 @@ class SortieController extends AbstractController
         }
 
         try {
-            // INSERT DIRECT dans la table de jointure (contournement du problème Doctrine)
             $sqlInsert = 'INSERT INTO sortie_participant (sortie_id, participant_id) VALUES (:sortie_id, :participant_id)';
             $stmtInsert = $conn->prepare($sqlInsert);
             $stmtInsert->executeStatement([
                 'sortie_id' => $sortie->getId(),
                 'participant_id' => $participantId
             ]);
+
+            $sqlCountAfter = 'SELECT COUNT(*) FROM sortie_participant WHERE sortie_id = :sid';
+            $countAfter = (int)$conn->prepare($sqlCountAfter)->executeQuery(['sid' => $sortie->getId()])->fetchOne();
+
+            if ($sortie->getNbInscriptionsMax() !== null && $countAfter >= $sortie->getNbInscriptionsMax()) {
+                $etatCloturee = $etatRepo->findOneBy(['libelle' => 'Clôturée']);
+                if ($etatCloturee) {
+                    $sortie->setEtat($etatCloturee);
+                    $em->flush(); // persiste le changement d’état
+                }
+            }
 
             $this->addFlash('success', 'Inscription réussie !');
         } catch (\Exception $e) {
@@ -255,9 +267,9 @@ class SortieController extends AbstractController
     public function desister(
         Sortie $sortie,
         Request $request,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        EtatRepository $etatRepo
     ): Response {
-        // Validation du token CSRF
         if (!$this->isCsrfTokenValid('desister'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
@@ -265,36 +277,59 @@ class SortieController extends AbstractController
 
         $user = $this->getUser();
 
-        // Vérifier que l'utilisateur est bien un Participant
         if (!$user instanceof \App\Entity\Participant) {
             throw $this->createAccessDeniedException('Utilisateur non valide.');
         }
 
-        // CRUCIAL : Récupérer le participant depuis la base pour avoir une entité managée
         $participant = $em->getRepository(\App\Entity\Participant::class)->find($user->getId());
 
         if (!$participant) {
             throw $this->createNotFoundException('Participant introuvable.');
         }
 
-        // Vérifier que le participant est bien inscrit
         if (!$sortie->getParticipantInscrit()->contains($participant)) {
             $this->addFlash('warning', 'Vous n\'êtes pas inscrit à cette sortie.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
-        // Vérifier que la sortie n'a pas déjà commencé
         $now = new \DateTime();
         if ($sortie->getDateHeureDebut() && $sortie->getDateHeureDebut() <= $now) {
             $this->addFlash('error', 'La sortie a déjà commencé, vous ne pouvez plus vous désister.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
-        // Retirer l'inscription
         $sortie->removeParticipantInscrit($participant);
 
-        // Flush pour persister la modification
         $em->flush();
+
+        $conn = $em->getConnection();
+        $countNow = (int)$conn->prepare('SELECT COUNT(*) FROM sortie_participant WHERE sortie_id = :sid')
+            ->executeQuery(['sid' => $sortie->getId()])
+            ->fetchOne();
+
+        $max = $sortie->getNbInscriptionsMax() ?? PHP_INT_MAX;
+
+        $now = new \DateTimeImmutable('now');
+        $limit = $sortie->getDateLimiteInscription(); // \DateTimeInterface|null
+        $limitPassed = $limit ? ($limit < $now->setTime(0,0)) : false;
+
+        if ($countNow >= $max) {
+            $etat = $etatRepo->findOneBy(['libelle' => 'Clôturée']);
+            if ($etat) {
+                $sortie->setEtat($etat);
+                $em->flush();
+            }
+        } else {
+            if ($limitPassed) {
+                $etat = $etatRepo->findOneBy(['libelle' => 'Clôturée']);
+            } else {
+                $etat = $etatRepo->findOneBy(['libelle' => 'Ouverte']);
+            }
+            if ($etat) {
+                $sortie->setEtat($etat);
+                $em->flush();
+            }
+        }
 
         $this->addFlash('success', 'Vous vous êtes désisté de cette sortie.');
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
@@ -331,4 +366,5 @@ class SortieController extends AbstractController
             'me'   => $me,
         ]);
     }
+
 }
