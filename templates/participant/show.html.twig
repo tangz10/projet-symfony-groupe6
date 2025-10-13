@@ -14,13 +14,19 @@
                     <div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-purple-500 rounded-full opacity-20"></div>
                     <div class="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-32 h-32 bg-purple-500 rounded-full opacity-20"></div>
 
-                    <!-- Avatar avec initiales -->
+                    <!-- Avatar avec photo ou initiales -->
                     <div class="absolute -bottom-16 left-8">
-                        <div class="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-purple-100 flex items-center justify-center">
-                        <span class="text-4xl text-purple-600 font-medium">
-                            {{ participant.prenom|first|upper }}{{ participant.nom|first|upper }}
-                        </span>
-                        </div>
+                        {% if participant.photoProfil %}
+                            <img src="{{ asset('images/profils/' ~ participant.photoProfil) }}"
+                                 alt="{{ participant.prenom }} {{ participant.nom }}"
+                                 class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover">
+                        {% else %}
+                            <div class="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-purple-100 flex items-center justify-center">
+                                <span class="text-4xl text-purple-600 font-medium">
+                                    {{ participant.prenom|first|upper }}{{ participant.nom|first|upper }}
+                                </span>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
 

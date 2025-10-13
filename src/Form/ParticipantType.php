@@ -10,6 +10,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Vich\UploaderBundle\Form\Type\VichImageType;
 
 class ParticipantType extends AbstractType
 {
@@ -25,6 +26,14 @@ class ParticipantType extends AbstractType
             ->add('nom')
             ->add('prenom')
             ->add('telephone')
+            ->add('photoProfilFile', VichImageType::class, [
+                'required' => false,
+                'allow_delete' => false,
+                'download_uri' => false,
+                'image_uri' => false,
+                'label' => 'Photo de profil'
+            ])
+
             ->add('administrateur')
             ->add('actif')
             ->add('site', EntityType::class, [
