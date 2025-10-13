@@ -2,26 +2,6 @@
 
 {% block title %}Sortir.com - Organisez vos sorties entre collègues{% endblock %}
 
-{% block stylesheets %}
-    {{ parent() }}
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            DEFAULT: '#8B5CF6',
-                            dark: '#6D28D9',
-                            light: '#A78BFA',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-{% endblock %}
-
 {% block body %}
     <div class="min-h-screen bg-white text-gray-900">
         {# Hero Section #}
@@ -45,7 +25,7 @@
                 {# Main title - plus petit #}
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                     <span class="block text-gray-900">Organisez vos sorties</span>
-                    <span class="block text-primary">
+                    <span class="block text-purple-600">
                         dans votre ville ! 📍
                     </span>
                 </h1>
@@ -61,23 +41,23 @@
                 <div class="flex flex-col sm:flex-row gap-3 justify-center items-center mb-12">
                     {% if app.user %}
                         <a href="{{ path('app_sortie_index') }}"
-                           class="px-6 py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-dark transition-all duration-200 hover:scale-105 min-w-[220px] shadow-md">
+                           class="px-6 py-3 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-700 transition-all duration-200 hover:scale-105 min-w-[220px] shadow-md">
                             🎯 Voir les sorties
                         </a>
                         <a href="{{ path('app_sortie_new') }}"
-                           class="px-6 py-3 border-2 border-primary text-primary font-semibold rounded-full hover:bg-primary hover:text-white transition-all duration-200 hover:scale-105 min-w-[220px]">
+                           class="px-6 py-3 border-2 border-purple-600 text-purple-600 font-semibold rounded-full hover:bg-purple-600 hover:text-white transition-all duration-200 hover:scale-105 min-w-[220px]">
                             ✨ Organiser une sortie
                         </a>
                     {% else %}
+                        <a href="{{ path('app_register') }}"
+                           class="px-6 py-3 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-700 transition-all duration-200 hover:scale-105 min-w-[220px] shadow-md">
+                            🚀 Je m'inscris
+                        </a>
+                        <a href="{{ path('app_login') }}"
+                           class="px-6 py-3 border-2 border-purple-600 text-purple-600 font-semibold rounded-full hover:bg-purple-600 hover:text-white transition-all duration-200 hover:scale-105 min-w-[220px]">
+                            👋 Se connecter
+                        </a>
                     {% endif %}
-                    <a href="{{ path('app_register') }}"
-                       class="px-6 py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-dark transition-all duration-200 hover:scale-105 min-w-[220px] shadow-md">
-                        🚀 Je m'inscris
-                    </a>
-                    <a href="{{ path('app_login') }}"
-                       class="px-6 py-3 border-2 border-primary text-primary font-semibold rounded-full hover:bg-primary hover:text-white transition-all duration-200 hover:scale-105 min-w-[220px]">
-                        👋 Se connecter
-                    </a>
                 </div>
 
                 {# Examples de sorties #}
@@ -154,15 +134,15 @@
 
                 <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                     <div class="p-4 bg-purple-50 rounded-lg">
-                        <h3 class="font-semibold text-primary mb-2">🏙️ Niort</h3>
+                        <h3 class="font-semibold text-purple-600 mb-2">🏙️ Niort</h3>
                         <p class="text-sm text-gray-600">Bar Le Central, Bowling, Cinéma CGR...</p>
                     </div>
                     <div class="p-4 bg-purple-50 rounded-lg">
-                        <h3 class="font-semibold text-primary mb-2">🌊 La Rochelle</h3>
+                        <h3 class="font-semibold text-purple-600 mb-2">🌊 La Rochelle</h3>
                         <p class="text-sm text-gray-600">Vieux Port, restaurants, aquarium...</p>
                     </div>
                     <div class="p-4 bg-purple-50 rounded-lg">
-                        <h3 class="font-semibold text-primary mb-2">🏛️ Poitiers</h3>
+                        <h3 class="font-semibold text-purple-600 mb-2">🏛️ Poitiers</h3>
                         <p class="text-sm text-gray-600">Centre-ville, Futuroscope, bars...</p>
                     </div>
                 </div>
@@ -184,11 +164,11 @@
                     Rejoignez vos collègues et créez des souvenirs !
                 </p>
                 {% if not app.user %}
+                    <a href="{{ path('app_register') }}"
+                       class="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 text-white font-bold rounded-full hover:bg-purple-700 transition-all duration-200 hover:scale-105 shadow-lg">
+                        🎊 C'est parti !
+                    </a>
                 {% endif %}
-                <a href="{{ path('app_register') }}"
-                   class="inline-flex items-center gap-2 px-8 py-4 bg-primary text-white font-bold rounded-full hover:bg-primary-dark transition-all duration-200 hover:scale-105 shadow-lg">
-                    🎊 C'est parti !
-                </a>
             </div>
         </section>
     </div>
