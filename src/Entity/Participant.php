@@ -143,8 +143,13 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function __serialize(): array
     {
-        $data = (array) $this;
-        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
+        $data = get_object_vars($this);
+
+        unset($data['photoProfilFile']);
+
+        if (isset($data['password'])) {
+            $data['password'] = hash('crc32c', $this->password);
+        }
 
         return $data;
     }
