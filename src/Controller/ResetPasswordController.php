@@ -41,11 +41,18 @@ class ResetPasswordController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            /** @var string $email */
             $email = $form->get('email')->getData();
 
-            return $this->processSendingPasswordResetEmail($email, $mailer, $translator
-            );
+            $user = $this->entityManager->getRepository(Participant::class)->findOneBy([
+                'email' => $email,
+            ]);
+
+            if ($user) {
+                $request->getSession()->set('reset_user_id', $user->getId());
+                return $this->redirectToRoute('app_reset_password_direct');
+            }
+
+            $this->addFlash('error', 'Utilisateur non trouvé');
         }
 
         return $this->render('reset_password/request.html.twig', [
@@ -69,6 +76,41 @@ class ResetPasswordController extends AbstractController
             'resetToken' => $resetToken,
         ]);
     }
+
+    #[Route('/direct', name: 'app_reset_password_direct')]
+    public function resetDirect(Request $request, UserPasswordHasherInterface $passwordHasher): Response
+    {
+        $userId = $request->getSession()->get('reset_user_id');
+
+        if (!$userId) {
+            return $this->redirectToRoute('app_forgot_password_request');
+        }
+
+        $user = $this->entityManager->getRepository(Participant::class)->find($userId);
+
+        if (!$user) {
+            return $this->redirectToRoute('app_forgot_password_request');
+        }
+
+        $form = $this->createForm(ChangePasswordFormType::class);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $plainPassword = $form->get('plainPassword')->getData();
+            $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
+            $this->entityManager->flush();
+
+            $request->getSession()->remove('reset_user_id');
+            $this->addFlash('success', 'Mot de passe modifié avec succès');
+
+            return $this->redirectToRoute('app_login');
+        }
+
+        return $this->render('reset_password/reset.html.twig', [
+            'resetForm' => $form,
+        ]);
+    }
+
 
     /**
      * Validates and process the reset URL that the user clicked in their email.
