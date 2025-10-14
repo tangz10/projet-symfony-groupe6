@@ -73,6 +73,25 @@
                 </div>
 
                 <div class="space-y-2">
+                    <label for="{{ registrationForm.pseudo.vars.id }}" class="block text-sm font-medium text-gray-700">
+                        Pseudo <span class="text-red-500">*</span>
+                    </label>
+                    {{ form_widget(registrationForm.pseudo, {
+                        'attr': {
+                            'class': 'w-full px-4 py-3 border border-purple-600/30 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all outline-none text-gray-900 placeholder-gray-500 bg-white shadow-sm focus:shadow-md',
+                            'placeholder': 'ex: JohnDoe86'
+                        }
+                    }) }}
+                    {% if form_errors(registrationForm.pseudo) %}
+                        <div class="text-red-600 text-sm flex items-center gap-1">
+                            <span>⚠️</span>
+                            {{ form_errors(registrationForm.pseudo) }}
+                        </div>
+                    {% endif %}
+                </div>
+
+
+                <div class="space-y-2">
                     <label for="{{ registrationForm.email.vars.id }}" class="block text-sm font-medium text-gray-700">
                         Adresse email <span class="text-red-500">*</span>
                     </label>
