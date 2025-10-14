@@ -2,246 +2,372 @@
 
 {% block title %}Afficher une sortie{% endblock %}
 
-{# On désactive l'affichage global des flashs pour cette page #}
 {% block flash_messages %}{% endblock %}
 
 {% block body %}
     <div class="flex-1 overflow-y-auto">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 md:p-8">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-                    <h1 class="text-3xl md:text-4xl font-semibold text-gray-800">Afficher une sortie</h1>
-                    <a href="{{ path('app_sortie_index') }}"
-                       class="inline-flex items-center h-11 px-5 rounded-full bg-purple-600 text-white hover:bg-purple-700 shadow">
-                        ← Retour à la liste
-                    </a>
-                </div>
+        <div class="w-full lg:grid lg:grid-cols-[minmax(0,1fr)_31rem]">
+            <div class="px-4 py-4 lg:justify-self-end">
+                <div class="max-w-7xl lg:mx-0 mx-auto">
+                    <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 md:p-8">
+                        {% set isAnnulee = s.etat and s.etat.libelle == 'Annulée' %}
+                        {% set isOuverte = s.etat and s.etat.libelle == 'Ouverte' %}
+                        {% set isCreee = s.etat and s.etat.libelle == 'Créée' %}
+                        {% set isCloturee = s.etat and s.etat.libelle == 'Clôturée' %}
+                        {% set isPassee = s.etat and s.etat.libelle == 'Passée' %}
+                        {% set isEnCours = s.etat and s.etat.libelle == 'En cours' %}
+                        {% set isOrganisateur = me and s.participantOrganisateur and me.id == s.participantOrganisateur.id %}
+                        {% set inscrit = me ? s.participantInscrit.contains(me) : false %}
+                        {% set afterClosure = s.dateLimiteInscription and s.dateLimiteInscription <= 'now'|date %}
+                        {% set inscritsCount = s.participantInscrit|length %}
+                        {% set isComplet = s.nbInscriptionsMax is not null and inscritsCount >= s.nbInscriptionsMax %}
+                        {% set beforeStart = s.dateHeureDebut is empty or s.dateHeureDebut > 'now'|date %}
+                        {% set isAdmin = is_granted('ROLE_ADMIN') %}
 
-                {# Messages flash DANS la card, juste sous le titre #}
-                {% for label, messages in app.flashes %}
-                    {% for message in messages %}
-                        <div class="flash-message mb-4 rounded-xl p-4 animate-fade-in {% if label == 'success' %}bg-green-50 border border-green-200{% elseif label == 'error' %}bg-red-50 border border-red-200{% endif %}">
-                            <div class="flex items-start gap-3">
-                                <div class="mt-0.5">
-                                    {% if label == 'success' %}
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
+                            <div class="flex items-center gap-3">
+                                <h1 class="text-2xl md:text-3xl font-semibold text-gray-800">
+                                    Afficher une sortie
+                                </h1>
+
+                                {% if isOrganisateur and isCreee %}
+                                    <a href="{{ path('app_sortie_edit', {'id': s.id}) }}"
+                                       class="inline-flex items-center justify-center w-10 h-10 rounded-full border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition"
+                                       title="Modifier la sortie">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                                            <path d="M12.3 6.3l5.4 5.4M14 4.6l2.8-2.8a2 2 0 112.8 2.8L8.6 15.6 4 16l.4-4.6L14 4.6z"
+                                                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
-                                    {% elseif label == 'error' %}
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                                        </svg>
-                                    {% endif %}
-                                </div>
-                                <div class="text-sm flex-1">
-                                    <p class="font-semibold {% if label == 'success' %}text-green-800{% else %}text-red-800{% endif %}">
-                                        {{ label == 'success' ? 'Succès' : 'Erreur' }}
-                                    </p>
-                                    <p class="mt-1 {% if label == 'success' %}text-green-700{% else %}text-red-700{% endif %}">
-                                        {{ message }}
-                                    </p>
-                                </div>
-                                <button onclick="this.closest('.flash-message').remove()" class="ml-2 {% if label == 'success' %}text-green-600 hover:text-green-800{% else %}text-red-600 hover:text-red-800{% endif %}">
-                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% endfor %}
-
-                {% set isAnnulee = s.etat and s.etat.libelle == 'Annulée' %}
-                {% set isOuverte = s.etat and s.etat.libelle == 'Ouverte' %}
-                {% set isCreee = s.etat and s.etat.libelle == 'Créée' %}
-                {% set isOrganisateur = me and s.participantOrganisateur and me.id == s.participantOrganisateur.id %}
-                {% set inscrit = me ? s.participantInscrit.contains(me) : false %}
-
-                {% if isAnnulee %}
-                    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4">
-                        <div class="flex items-start gap-3">
-                            <div class="mt-0.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 7a1 1 0 112 0v4a1 1 0 11-2 0V7zm2 6a1 1 0 10-2 0 1 1 0 002 0z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="text-sm">
-                                <p class="font-semibold text-red-800">Cette sortie est annulée.</p>
-                                {% if s.motifAnnulation %}
-                                    <p class="mt-1 text-red-700">
-                                        <span class="font-medium">Motif :</span>
-                                        {{ s.motifAnnulation }}
-                                    </p>
+                                    </a>
                                 {% endif %}
                             </div>
-                        </div>
-                    </div>
-                {% endif %}
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
-                    <div class="space-y-4">
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-48 text-base text-gray-600">Nom de la sortie :</span>
-                            <span class="text-gray-900 font-medium text-base">{{ s.nom }}</span>
+                            <a href="{{ path('app_sortie_index') }}"
+                               class="inline-flex items-center h-11 px-5 rounded-full bg-purple-600 text-white hover:bg-purple-700 shadow w-full justify-center sm:w-auto">
+                                ← Retour à la liste
+                            </a>
                         </div>
 
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-48 text-base text-gray-600">Date et heure de la sortie :</span>
-                            <span class="text-gray-900 text-base">{{ s.dateHeureDebut ? s.dateHeureDebut|date('d/m/Y H:i') : '—' }}</span>
-                        </div>
-
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-48 text-base text-gray-600">Date limite d'inscription :</span>
-                            <span class="text-gray-900 text-base">{{ s.dateLimiteInscription ? s.dateLimiteInscription|date('d/m/Y') : '—' }}</span>
-                        </div>
-
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-48 text-base text-gray-600">Nombre de places :</span>
-                            <span class="text-gray-900 text-base">{{ s.nbInscriptionsMax is not null ? s.nbInscriptionsMax : '—' }}</span>
-                        </div>
-
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-48 text-base text-gray-600">Durée :</span>
-                            <span class="text-gray-900 text-base">{{ s.duree is not null ? s.duree ~ ' minutes' : '—' }}</span>
-                        </div>
-
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-48 text-base text-gray-600">État :</span>
-                            <span class="text-gray-900 text-base">{{ s.etat ? s.etat.libelle : '—' }}</span>
-                        </div>
-
-                        <div class="flex flex-col gap-1">
-                            <span class="text-base text-gray-600">Description et infos :</span>
-                            <span class="text-gray-900 break-words text-base">{{ s.infosSortie ?: '—' }}</span>
-                        </div>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-44 text-base text-gray-600">Lieu :</span>
-                            <span class="text-gray-900 text-base">{{ s.lieu ? s.lieu.nom : '—' }}</span>
-                        </div>
-
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-44 text-base text-gray-600">Rue :</span>
-                            <span class="text-gray-900 text-base">{{ s.lieu ? s.lieu.rue : '—' }}</span>
-                        </div>
-
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-44 text-base text-gray-600">Ville :</span>
-                            <span class="text-gray-900 text-base">{{ s.lieu and s.lieu.ville ? s.lieu.ville.nom : '—' }}</span>
-                        </div>
-
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-44 text-base text-gray-600">Code postal :</span>
-                            <span class="text-gray-900 text-base">{{ s.lieu and s.lieu.ville ? s.lieu.ville.codePostal : '—' }}</span>
-                        </div>
-
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-44 text-base text-gray-600">Latitude :</span>
-                            <span class="text-gray-900 text-base">{{ s.lieu ? s.lieu.latitude : '—' }}</span>
-                        </div>
-
-                        <div class="flex items-baseline gap-2">
-                            <span class="w-44 text-base text-gray-600">Longitude :</span>
-                            <span class="text-gray-900 text-base">{{ s.lieu ? s.lieu.longitude : '—' }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 mb-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Liste des participants inscrits :</h2>
-
-                    <div class="border border-gray-200 rounded-xl overflow-hidden">
-                        <div class="max-h-48 overflow-y-auto">
-                            <table class="min-w-full divide-y divide-gray-200 bg-white">
-                                <thead class="bg-gray-50">
-                                <tr class="text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                                    <th class="px-4 py-3">Nom</th>
-                                    <th class="px-4 py-3">Prénom</th>
-                                    <th class="px-4 py-3">Email</th>
-                                </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                {% for p in s.participantInscrit %}
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 text-gray-800 text-base">{{ p.nom }}</td>
-                                        <td class="px-4 py-3 text-gray-800 text-base">{{ p.prenom }}</td>
-                                        <td class="px-4 py-3 text-gray-600 text-base">{{ p.email }}</td>
-                                    </tr>
-                                {% else %}
-                                    <tr>
-                                        <td colspan="3" class="px-4 py-4 text-center text-gray-500 text-base">Aucun participant pour le moment.</td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {% set isOuverte = s.etat and (s.etat.libelle|trim|lower == 'ouverte') %}
-                    <div class="mt-6 flex flex-col sm:flex-row justify-center gap-4">
-                        {% if me and not isOrganisateur %}
-                            {% if not inscrit and isOuverte and not isAnnulee %}
-                                <form method="post" action="{{ path('app_sortie_inscrire', {id: s.id}) }}" style="display:inline;">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ s.id) }}">
-                                    <button type="submit" class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
-                                        S'inscrire
-                                    </button>
-                                </form>
-                            {% elseif inscrit and not isAnnulee %}
-                                <form method="post" action="{{ path('app_sortie_desister', {id: s.id}) }}" style="display:inline;">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('desister' ~ s.id) }}">
-                                    <button type="submit" class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
-                                        Se désister
-                                    </button>
-                                </form>
-                            {% elseif not isOuverte and not isAnnulee %}
-                                <p class="text-base text-gray-600 italic">
-                                    Cette sortie n'est pas ouverte à l'inscription pour l'instant.
-                                </p>
-                            {% endif %}
-                        {% endif %}
-
-                        {% if isOrganisateur and not isAnnulee and isCreee %}
-                            <form method="post" action="{{ path('app_sortie_publier', {'id': s.id}) }}">
-                                <input type="hidden" name="_token" value="{{ csrf_token('publish' ~ s.id) }}">
-                                <button class="h-11 px-6 rounded-full bg-green-700 text-white hover:bg-green-800 shadow">
-                                    Publier
-                                </button>
-                            </form>
-
-                            <button type="button" class="h-11 px-6 rounded-full bg-red-700 text-white hover:bg-red-800 shadow"
-                                    onclick="document.getElementById('modal-annulation').classList.remove('hidden')">
-                                Annuler la sortie
-                            </button>
-
-                            <div id="modal-annulation" class="hidden fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-                                <div class="bg-white rounded-2xl shadow-xl p-6 w-96 text-center">
-                                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Confirmer l'annulation</h2>
-                                    <p class="text-gray-600 mb-4">Vous pouvez indiquer un motif d'annulation :</p>
-
-                                    <form method="post" action="{{ path('app_sortie_annuler', {'id': s.id}) }}" class="space-y-4">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ s.id) }}">
-                                        <textarea name="motif" rows="3" placeholder="Motif d'annulation (facultatif)"
-                                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-red-600 focus:outline-none"></textarea>
-
-                                        <div class="flex justify-center gap-4">
-                                            <button type="submit" class="px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800">
-                                                Oui, annuler
-                                            </button>
-                                            <button type="button" onclick="document.getElementById('modal-annulation').classList.add('hidden')"
-                                                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
-                                                Annuler
-                                            </button>
+                        {% for label, messages in app.flashes %}
+                            {% for message in messages %}
+                                <div class="flash-message mb-4 rounded-xl p-4 animate-fade-in {% if label == 'success' %} bg-green-50 border border-green-200 {% elseif label == 'error' %}bg-red-50 border border-red-200{% endif %}">
+                                    <div class="flex items-start gap-3">
+                                        <div class="mt-0.5">
+                                            {% if label == 'success' %}
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                                </svg>
+                                            {% elseif label == 'error' %}
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                                </svg>
+                                            {% endif %}
                                         </div>
-                                    </form>
+                                        <div class="text-sm flex-1">
+                                            <p class="font-semibold {% if label == 'success' %}text-green-800{% else %}text-red-800{% endif %}">
+                                                {{ label == 'success' ? 'Succès' : 'Erreur' }}
+                                            </p>
+                                            <p class="mt-1 {% if label == 'success' %}text-green-700{% else %}text-red-700{% endif %}">
+                                                {{ message }}
+                                            </p>
+                                        </div>
+                                        <button onclick="this.closest('.flash-message').remove()" class="ml-2 {% if label == 'success' %}text-green-600 hover:text-green-800{% else %}text-red-600 hover:text-red-800{% endif %}">
+                                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+
+                        {% if isAnnulee %}
+                            <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="mt-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 7a1 1 0 112 0v4a1 1 0 11-2 0V7zm2 6a1 1 0 10-2 0 1 1 0 002 0z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-sm">
+                                        <p class="font-semibold text-red-800">Cette sortie est annulée.</p>
+                                        {% if s.motifAnnulation %}
+                                            <p class="mt-1 text-red-700">
+                                                <span class="font-medium">Motif :</span>
+                                                {{ s.motifAnnulation }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         {% endif %}
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-5">
+                            <div class="rounded-xl bg-gray-50 border border-gray-200 shadow-sm p-3 sm:p-5">
+                                <div class="space-y-4">
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Nom de la sortie :</span>
+                                        <span class="text-gray-900 font-medium text-base break-words">{{ s.nom }}</span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Date et heure de la sortie :</span>
+                                        <span class="text-gray-900 text-base">
+                                          {{ s.dateHeureDebut ? s.dateHeureDebut|date('d/m/Y H:i') : '—' }}
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Date limite d'inscription :</span>
+                                        <span class="text-gray-900 text-base">
+                                          {{ s.dateLimiteInscription ? s.dateLimiteInscription|date('d/m/Y') : '—' }}
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Nombre de places :</span>
+                                        <span class="text-gray-900 text-base">
+                                          {{ s.nbInscriptionsMax is not null ? s.nbInscriptionsMax : '—' }}
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Durée :</span>
+                                        <span class="text-gray-900 text-base">
+                                          {{ s.duree is not null ? s.duree ~ ' minutes' : '—' }}
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">État :</span>
+                                        <span class="text-gray-900 text-base">
+                                          {{ s.etat ? s.etat.libelle : '—' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="rounded-xl bg-gray-50 border border-gray-200 shadow-sm p-3 sm:p-5">
+                                <div class="space-y-4">
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Lieu :</span>
+                                        <span class="text-gray-900 text-base break-words">{{ s.lieu ? s.lieu.nom : '—' }}</span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Rue :</span>
+                                        <span class="text-gray-900 text-base break-words">{{ s.lieu ? s.lieu.rue : '—' }}</span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Ville :</span>
+                                        <span class="text-gray-900 text-base">{{ s.lieu and s.lieu.ville ? s.lieu.ville.nom : '—' }}</span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Code postal :</span>
+                                        <span class="text-gray-900 text-base">{{ s.lieu and s.lieu.ville ? s.lieu.ville.codePostal : '—' }}</span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Latitude :</span>
+                                        <span class="text-gray-900 text-base">{{ s.lieu ? s.lieu.latitude : '—' }}</span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                        <span class="sm:w-48 text-sm sm:text-base font-medium text-gray-500">Longitude :</span>
+                                        <span class="text-gray-900 text-base">{{ s.lieu ? s.lieu.longitude : '—' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rounded-xl bg-gray-50 border border-gray-200 p-3 sm:p-5">
+                            <div class="flex flex-col">
+                                <span class="text-sm sm:text-base font-medium text-gray-500">Description et infos :</span>
+                                <span class="text-gray-900 break-words mt-2">{{ s.infosSortie ?: '—' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 mb-4">
+                            <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2">Liste des participants inscrits :</h2>
+
+                            <div class="border border-gray-200 rounded-xl overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200 bg-white text-sm sm:text-base">
+                                        <thead class="bg-gray-50">
+                                        <tr class="text-left font-semibold text-gray-600 uppercase tracking-wider">
+                                            <th class="px-4 py-3">Nom</th>
+                                            <th class="px-4 py-3">Prénom</th>
+                                            <th class="px-4 py-3">Email</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                        {% for p in s.participantInscrit %}
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-3 text-gray-800">{{ p.nom }}</td>
+                                                <td class="px-4 py-3 text-gray-800">{{ p.prenom }}</td>
+                                                <td class="px-4 py-3 text-gray-600 break-all">{{ p.email }}</td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="3" class="px-4 py-4 text-center text-gray-500">Aucun participant pour le moment.</td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {% set etatLib = s.etat ? s.etat.libelle : null %}
+                            {% set peutNoter = (etatLib in ['Passée','Terminée']) and inscrit %}
+                            {% set ratings = s.ratings ?? [] %}
+                            {% set totalNotes = ratings|length %}
+                            {% set somme = 0 %}
+                            {% for r in ratings %}{% set somme = somme + r.note %}{% endfor %}
+                            {% set moyenne = totalNotes > 0 ? (somme / totalNotes) : null %}
+
+                            {% set isOuverte = s.etat and (s.etat.libelle|trim|lower == 'ouverte') %}
+                            <div class="mt-6 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                                {% if me and not isOrganisateur %}
+                                    {% if isOuverte and not afterClosure and not isEnCours and not isCloturee and not isAnnulee and not inscrit and not isComplet %}
+                                        <form method="post" action="{{ path('app_sortie_inscrire', {id: s.id}) }}" class="w-full sm:w-auto" style="display:inline;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ s.id) }}">
+                                            <button type="submit" class="w-full h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
+                                                S'inscrire
+                                            </button>
+                                        </form>
+                                    {% elseif inscrit and not isAnnulee and not isEnCours and not isCloturee and beforeStart %}
+                                        <form method="post" action="{{ path('app_sortie_desister', {id: s.id}) }}" class="w-full sm:w-auto" style="display:inline;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('desister' ~ s.id) }}">
+                                            <button type="submit" class="w-full h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
+                                                Se désister
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        {% if isAnnulee %}
+                                            <p class="text-sm sm:text-base text-gray-600 italic text-center sm:text-left">Cette sortie a été annulée.</p>
+                                        {% elseif isComplet %}
+                                            <p class="text-sm sm:text-base text-gray-600 italic text-center sm:text-left">La sortie est complète.</p>
+                                        {% elseif afterClosure or isCloturee %}
+                                            <p class="text-sm sm:text-base text-gray-600 italic text-center sm:text-left">La date d'inscription est dépassée.</p>
+                                        {% elseif isPassee %}
+                                            <p class="text-sm sm:text-base text-gray-600 italic text-center sm:text-left">Cette sortie est déjà passée.</p>
+                                        {% elseif isEnCours %}
+                                            <p class="text-sm sm:text-base text-gray-600 italic text-center sm:text-left">Cette sortie est déjà en cours.</p>
+                                        {% elseif isCreee and not isAdmin %}
+                                            <p class="text-sm sm:text-base text-gray-600 italic text-center sm:text-left">Cette sortie n'est pas encore ouverte aux inscriptions.</p>
+                                        {% elseif not beforeStart == false and not isCreee %}
+                                            <p class="text-sm sm:text-base text-gray-600 italic text-center sm:text-left">La sortie a déjà commencé.</p>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if isOrganisateur and not isAnnulee and isCreee %}
+                                    <form method="post" action="{{ path('app_sortie_publier', {'id': s.id}) }}" class="w-full sm:w-auto">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('publish' ~ s.id) }}">
+                                        <button class="w-full h-11 px-6 rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
+                                            Publier
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                {% if (isOrganisateur or isAdmin) and not isAnnulee and isCreee %}
+                                    <form method="post" action="{{ path('app_sortie_annuler', {'id': s.id}) }}" class="w-full sm:w-auto">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ s.id) }}">
+                                        <button type="submit"
+                                                class="w-full h-11 px-6 rounded-full border border-red-600 text-red-600 bg-white hover:bg-red-50 shadow-sm">
+                                            Annuler la sortie
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                <div id="modal-annulation" class="hidden fixed inset-0 flex items-center justify-center bg-black/60 z-50 p-4">
+                                    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md text-center">
+                                        <h2 class="text-lg font-semibold text-gray-800 mb-3">Confirmer l’annulation</h2>
+                                        <p class="text-gray-600 mb-4">Vous pouvez indiquer un motif d’annulation :</p>
+                                        <form method="post" action="{{ path('app_sortie_annuler', {'id': s.id}) }}" class="space-y-4">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ s.id) }}">
+                                            <textarea name="motif" rows="3" placeholder="Motif d'annulation (facultatif)"
+                                                      class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-red-600 focus:outline-none"></textarea>
+
+                                            <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                                                <button type="submit" class="px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800">
+                                                    Oui, annuler
+                                                </button>
+                                                <button type="button" onclick="document.getElementById('modal-annulation').classList.add('hidden')"
+                                                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                                                    Annuler
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <aside class="pl-6 pr-8 pt-8 lg:pt-4 lg:sticky lg:top-4">
+                {% set peutNoter = (isPassee or (s.etat and s.etat.libelle == 'Terminée')) and inscrit %}
+                {% set ratings = s.note ?? [] %}
+                {% set totalNotes = ratings|length %}
+                {% set somme = 0 %}
+                {% for r in ratings %}{% set somme = somme + r.note %}{% endfor %}
+                {% set moyenne = totalNotes > 0 ? (somme / totalNotes) : null %}
+
+                <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 md:p-8">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <p class="text-base font-medium text-gray-800">Note de la sortie</p>
+                            {% if moyenne is not null %}
+                                <p class="text-sm text-gray-600">
+                                    Moyenne :
+                                    <span class="font-semibold">{{ moyenne|number_format(1, '.', ' ') }}/5</span>
+                                    ({{ totalNotes }} vote{{ totalNotes > 1 ? 's' : '' }})
+                                </p>
+                            {% else %}
+                                <p class="text-sm text-gray-600">Pas encore de note.</p>
+                            {% endif %}
+                        </div>
+
+                        <div aria-hidden="true" class="shrink-0">
+                            {% set full = moyenne ? moyenne|round(0, 'floor') : 0 %}
+                            {% set half = (moyenne is not null) and (moyenne - full >= 0.5) %}
+                            {% for i in 1..5 %}
+                                {% set filled = i <= full %}
+                                {% set halfHere = (i == full + 1) and half %}
+                                <span class="text-xl sm:text-2xl {{ filled or halfHere ? 'text-yellow-500' : 'text-gray-300' }}">★</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if peutNoter %}
+                        <form method="post" action="{{ path('app_sortie_noter', {id: s.id}) }}" class="mt-3">
+                            <input type="hidden" name="_token" value="{{ csrf_token('rate' ~ s.id) }}">
+
+                            <div class="flex items-center gap-2">
+                                {% for i in 1..5 %}
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="note" value="{{ i }}" class="hidden" {% if myNote is defined and myNote == i %}checked{% endif %} required>
+                                        <span class="star text-2xl sm:text-3xl {{ myNote is defined and i <= myNote ? 'text-yellow-500' : 'text-gray-300' }}">★</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+
+                            <button type="submit" class="mt-3 h-10 px-5 w-full sm:w-auto rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
+                                {% if myNote is defined and myNote %}Mettre à jour ma note{% else %}Envoyer ma note{% endif %}
+                            </button>
+                        </form>
+
+                        <script>
+                            (function(){
+                                const form = document.currentScript.previousElementSibling;
+                                const inputs = form.querySelectorAll('input[name="note"]');
+                                const stars  = form.querySelectorAll('.star');
+                                inputs.forEach((r, idx) => {
+                                    r.addEventListener('change', () => {
+                                        stars.forEach((s,i)=>s.classList.toggle('text-yellow-500', i <= idx));
+                                        stars.forEach((s,i)=>s.classList.toggle('text-gray-300', i >  idx));
+                                    });
+                                });
+                            })();
+                        </script>
+                        {% elseif not isPassee and inscrit %}
+                        <p class="mt-2 text-sm text-gray-500 italic">Vous pourrez noter une fois la sortie terminée.</p>
+                    {% endif %}
+                </div>
+            </aside>
         </div>
     </div>
 {% endblock %}

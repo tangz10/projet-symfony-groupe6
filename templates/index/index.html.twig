@@ -1,7 +1,175 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello IndexController!{% endblock %}
+{% block title %}Sortir.com - Organisez vos sorties entre collègues{% endblock %}
 
 {% block body %}
+    <div class="min-h-screen bg-white text-gray-900">
+        {# Hero Section #}
+        <section class="relative min-h-screen flex items-center justify-center px-6 py-16">
+            {# Fun background elements #}
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute top-10 left-10 text-2xl animate-bounce">🎉</div>
+                <div class="absolute top-20 right-20 text-xl animate-pulse">📍</div>
+                <div class="absolute bottom-20 left-20 text-2xl animate-bounce" style="animation-delay: 1s;">🍻</div>
+                <div class="absolute bottom-40 right-10 text-2xl animate-pulse" style="animation-delay: 2s;">🎯</div>
+                <div class="absolute top-1/2 left-5 text-lg animate-bounce" style="animation-delay: 0.5s;">🌮</div>
+            </div>
 
+            <div class="relative z-10 max-w-4xl mx-auto text-center">
+                {# Fun badge #}
+                <div class="inline-flex items-center gap-2 px-3 py-1 mb-6 bg-yellow-100 border border-yellow-300 rounded-full">
+                    <span class="text-lg">✨</span>
+                    <span class="text-sm font-medium text-yellow-800">Plus jamais seul pour sortir !</span>
+                </div>
+
+                {# Main title - plus petit #}
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                    <span class="block text-gray-900">Organisez vos sorties</span>
+                    <span class="block text-purple-600">
+                        dans votre ville ! 📍
+                    </span>
+                </h1>
+
+                {# Subtitle avec exemples de villes #}
+                <p class="text-lg sm:text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+                    Niort, La Rochelle, Poitiers... Peu importe où vous êtes, créez des sorties sympas avec vos collègues !
+                    <br>
+                    Bar, restaurant, bowling, cinéma... À vous de voir ! 🍻
+                </p>
+
+                {# CTA Buttons - plus petits #}
+                <div class="flex flex-col sm:flex-row gap-3 justify-center items-center mb-12">
+                    {% if app.user %}
+                        <a href="{{ path('app_sortie_index') }}"
+                           class="px-6 py-3 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-700 transition-all duration-200 hover:scale-105 min-w-[220px] shadow-md">
+                            🎯 Voir les sorties
+                        </a>
+                        <a href="{{ path('app_sortie_new') }}"
+                           class="px-6 py-3 border-2 border-purple-600 text-purple-600 font-semibold rounded-full hover:bg-purple-600 hover:text-white transition-all duration-200 hover:scale-105 min-w-[220px]">
+                            ✨ Organiser une sortie
+                        </a>
+                    {% else %}
+                        <a href="{{ path('app_register') }}"
+                           class="px-6 py-3 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-700 transition-all duration-200 hover:scale-105 min-w-[220px] shadow-md">
+                            🚀 Je m'inscris
+                        </a>
+                        <a href="{{ path('app_login') }}"
+                           class="px-6 py-3 border-2 border-purple-600 text-purple-600 font-semibold rounded-full hover:bg-purple-600 hover:text-white transition-all duration-200 hover:scale-105 min-w-[220px]">
+                            👋 Se connecter
+                        </a>
+                    {% endif %}
+                </div>
+
+                {# Examples de sorties #}
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto text-sm text-gray-600">
+                    <div class="flex items-center gap-2">
+                        <span>🍕</span>
+                        <span>Restaurant</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span>🎳</span>
+                        <span>Bowling</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span>🎬</span>
+                        <span>Cinéma</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span>🍻</span>
+                        <span>After-work</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# Comment ça marche - plus compact #}
+        <section class="py-16 px-6 bg-gradient-to-b from-purple-50 to-white">
+            <div class="max-w-5xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold mb-3 text-gray-900">
+                        Comment ça marche ? 🤷‍♀️
+                    </h2>
+                    <p class="text-lg text-gray-600">
+                        3 étapes, c'est tout !
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    {# Step 1 #}
+                    <div class="text-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div class="text-5xl mb-3">📝</div>
+                        <h3 class="text-xl font-bold mb-2 text-gray-900">1. Je propose</h3>
+                        <p class="text-gray-600">
+                            "Bar à Niort vendredi 19h ?" Je crée ma sortie en 2 clics !
+                        </p>
+                    </div>
+
+                    {# Step 2 #}
+                    <div class="text-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div class="text-5xl mb-3">📢</div>
+                        <h3 class="text-xl font-bold mb-2 text-gray-900">2. J'invite</h3>
+                        <p class="text-gray-600">
+                            Mes collègues voient la sortie et s'inscrivent s'ils sont dispo !
+                        </p>
+                    </div>
+
+                    {# Step 3 #}
+                    <div class="text-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div class="text-5xl mb-3">🎉</div>
+                        <h3 class="text-xl font-bold mb-2 text-gray-900">3. On profite !</h3>
+                        <p class="text-gray-600">
+                            On se retrouve et on passe un bon moment ensemble !
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# Exemples de sorties par ville #}
+        <section class="py-16 px-6 bg-white">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-3xl font-bold mb-8 text-gray-900">
+                    Des sorties partout ! 📍
+                </h2>
+
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <h3 class="font-semibold text-purple-600 mb-2">🏙️ Niort</h3>
+                        <p class="text-sm text-gray-600">Bar Le Central, Bowling, Cinéma CGR...</p>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <h3 class="font-semibold text-purple-600 mb-2">🌊 La Rochelle</h3>
+                        <p class="text-sm text-gray-600">Vieux Port, restaurants, aquarium...</p>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <h3 class="font-semibold text-purple-600 mb-2">🏛️ Poitiers</h3>
+                        <p class="text-sm text-gray-600">Centre-ville, Futuroscope, bars...</p>
+                    </div>
+                </div>
+
+                <p class="text-gray-600">
+                    Et plein d'autres villes ! Où que vous soyez, organisez vos sorties facilement.
+                </p>
+            </div>
+        </section>
+
+        {# Final CTA - plus compact #}
+        <section class="py-16 px-6 bg-gradient-to-r from-purple-100 to-pink-100">
+            <div class="max-w-3xl mx-auto text-center">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">
+                    <span class="text-gray-900">Prêt pour votre prochaine sortie ?</span>
+                    <div class="text-4xl mt-2">🤗</div>
+                </h2>
+                <p class="text-lg text-gray-600 mb-8">
+                    Rejoignez vos collègues et créez des souvenirs !
+                </p>
+                {% if not app.user %}
+                    <a href="{{ path('app_register') }}"
+                       class="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 text-white font-bold rounded-full hover:bg-purple-700 transition-all duration-200 hover:scale-105 shadow-lg">
+                        🎊 C'est parti !
+                    </a>
+                {% endif %}
+            </div>
+        </section>
+    </div>
 {% endblock %}

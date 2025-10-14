@@ -3,16 +3,21 @@
 namespace App\Entity;
 
 use App\Repository\ParticipantRepository;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\HttpFoundation\File\File;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Symfony\Component\Serializer\Annotation\Ignore;
 
 #[ORM\Entity(repositoryClass: ParticipantRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
+#[Vich\Uploadable]
 class Participant implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -59,6 +64,27 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private ?bool $actif = null;
+
+    #[Ignore]
+    #[Vich\UploadableField(mapping: 'participant_images', fileNameProperty: 'photoProfil')]
+    private ?File $photoProfilFile = null;
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $photoProfil = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $updatedAt = null;
+
+    /**
+     * @var Collection<int, Note>
+     */
+    #[ORM\OneToMany(targetEntity: Note::class, mappedBy: 'participant')]
+    private Collection $note;
+
+    public function __construct()
+    {
+        $this->note = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -129,8 +155,13 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function __serialize(): array
     {
-        $data = (array) $this;
-        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
+        $data = get_object_vars($this);
+
+        unset($data['photoProfilFile']);
+
+        if (isset($data['password'])) {
+            $data['password'] = hash('crc32c', $this->password);
+        }
 
         return $data;
     }
@@ -266,6 +297,59 @@ class Participant implements UserInterface, PasswordAuthenticatedUserInterface
     public function setActif(bool $actif): static
     {
         $this->actif = $actif;
+
+        return $this;
+    }
+    public function setPhotoProfilFile(?File $photoProfilFile = null): void
+    {
+        $this->photoProfilFile = $photoProfilFile;
+        if (null !== $photoProfilFile) {
+            $this->updatedAt = new \DateTimeImmutable();
+        }
+    }
+
+    public function getPhotoProfilFile(): ?File
+    {
+        return $this->photoProfilFile;
+    }
+
+    public function setPhotoProfil(?string $photoProfil): static
+    {
+        $this->photoProfil = $photoProfil;
+        return $this;
+    }
+
+    public function getPhotoProfil(): ?string
+    {
+        return $this->photoProfil;
+    }
+
+    /**
+     * @return Collection<int, Note>
+     */
+    public function getNote(): Collection
+    {
+        return $this->note;
+    }
+
+    public function addNote(Note $note): static
+    {
+        if (!$this->note->contains($note)) {
+            $this->note->add($note);
+            $note->setParticipant($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNote(Note $note): static
+    {
+        if ($this->note->removeElement($note)) {
+            // set the owning side to null (unless already changed)
+            if ($note->getParticipant() === $this) {
+                $note->setParticipant(null);
+            }
+        }
 
         return $this;
     }
