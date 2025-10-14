@@ -86,9 +86,23 @@ class SortieController extends AbstractController
             }
         }
 
+        $notes = $sortie->getNote();
+        $moy = $notes->count() ? array_sum(array_map(fn($r)=>$r->getNote(), $notes->toArray())) / $notes->count() : null;
+        $maNote = null;
+        if ($this->getUser() instanceof \App\Entity\Participant) {
+            foreach ($notes as $r) {
+                if ($r->getParticipant()->getId() === $this->getUser()->getId()) {
+                    $maNote = $r->getNote();
+                    break;
+                }
+            }
+        }
+
         return $this->render('sortie/show.html.twig', [
             's'  => $sortie,
             'me' => $this->getUser(),
+            'avgNote' => $moy,
+            'myNote' => $maNote,
         ]);
     }
 
