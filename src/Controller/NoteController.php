@@ -9,11 +9,12 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted('IS_AUTHENTICATED_FULLY')]
 final class NoteController extends AbstractController
 {
     #[Route('/sortie/{id}/noter', name: 'app_sortie_noter', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
     public function noter(Sortie $sortie, Request $request, EntityManagerInterface $em): Response
     {
         if (!$this->isCsrfTokenValid('rate'.$sortie->getId(), $request->request->get('_token'))) {

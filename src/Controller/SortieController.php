@@ -17,6 +17,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Psr\Log\LoggerInterface;
 
 #[Route('/sortie')]
+#[IsGranted('IS_AUTHENTICATED_FULLY')]
 class SortieController extends AbstractController
 {
     #[Route(name: 'app_sortie_index', methods: ['GET'])]

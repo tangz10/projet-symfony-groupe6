@@ -30,19 +30,6 @@ class SiteRepository extends ServiceEntityRepository
     //            ->getResult()
     //        ;
     //    }
-
-        /*
-        public function loadUserByIdentifier(string $identifier): ?Participant
-        {
-            return $this->createQueryBuilder('u')
-                ->where('u.email = :identifier OR u.pseudo = :identifier')
-                ->setParameter('identifier', $identifier)
-                ->getQuery()
-                ->getOneOrNullResult();
-        }
-        */
-
-
     //    public function findOneBySomeField($value): ?Site
     //    {
     //        return $this->createQueryBuilder('s')
