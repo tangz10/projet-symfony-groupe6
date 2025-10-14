@@ -62,11 +62,34 @@ class Sortie
     #[ORM\JoinColumn(name: 'lieu_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Lieu $lieu = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $motifAnnulation = null;
+
+    /**
+     * @var Collection<int, Note>
+     */
+    #[ORM\OneToMany(targetEntity: Note::class, mappedBy: 'sortie')]
+    private Collection $note;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $archivee = false;
+
     public function __construct()
     {
         $this->participantInscrit = new ArrayCollection();
+        $this->note = new ArrayCollection();
     }
 
+    public function isArchivee(): bool
+    {
+        return $this->archivee;
+    }
+
+    public function setArchivee(bool $archivee): self
+    {
+        $this->archivee = $archivee;
+        return $this;
+    }
     public function getId(): ?int
     {
         return $this->id;
@@ -142,12 +165,12 @@ class Sortie
         return $this;
     }
 
-    public function getEtatRelation(): ?Etat
+    public function getEtat(): ?Etat
     {
         return $this->etat;
     }
 
-    public function setEtatRelation(?Etat $etat): static
+    public function setEtat(?Etat $etat): static
     {
         $this->etat = $etat;
         return $this;
@@ -208,6 +231,47 @@ class Sortie
     public function removeParticipantInscrit(Participant $participantInscrit): static
     {
         $this->participantInscrit->removeElement($participantInscrit);
+
+        return $this;
+    }
+
+    public function getMotifAnnulation(): ?string
+    {
+        return $this->motifAnnulation;
+    }
+
+    public function setMotifAnnulation(?string $motifAnnulation): self
+    {
+        $this->motifAnnulation = $motifAnnulation;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Note>
+     */
+    public function getNote(): Collection
+    {
+        return $this->note;
+    }
+
+    public function addNote(Note $note): static
+    {
+        if (!$this->note->contains($note)) {
+            $this->note->add($note);
+            $note->setSortie($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNote(Note $note): static
+    {
+        if ($this->note->removeElement($note)) {
+            // set the owning side to null (unless already changed)
+            if ($note->getSortie() === $this) {
+                $note->setSortie(null);
+            }
+        }
 
         return $this;
     }

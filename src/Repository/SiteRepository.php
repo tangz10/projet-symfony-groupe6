@@ -30,7 +30,6 @@ class SiteRepository extends ServiceEntityRepository
     //            ->getResult()
     //        ;
     //    }
-
     //    public function findOneBySomeField($value): ?Site
     //    {
     //        return $this->createQueryBuilder('s')

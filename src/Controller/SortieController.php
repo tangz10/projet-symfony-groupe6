@@ -14,10 +14,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Psr\Log\LoggerInterface;
 
+#[Route('/sortie')]
+#[IsGranted('IS_AUTHENTICATED_FULLY')]
 class SortieController extends AbstractController
 {
-    #[Route('/', name: 'sortie_index', methods: ['GET'])]
+    #[Route(name: 'app_sortie_index', methods: ['GET'])]
     public function index(Request $request, SortieRepository $repo): Response
     {
         $form = $this->createForm(SortieFilterType::class);
@@ -34,7 +37,8 @@ class SortieController extends AbstractController
             'me' => $user,
         ]);
     }
-    #[Route('/sortie/new', name: 'sortie_new', methods: ['GET','POST'])]
+
+    #[Route('/new', name: 'app_sortie_new', methods: ['GET','POST'])]
     #[IsGranted('ROLE_USER')]
     public function new(Request $request, EntityManagerInterface $em, EtatRepository $etatRepository): Response
     {
@@ -46,20 +50,336 @@ class SortieController extends AbstractController
             $sortie->setParticipantOrganisateur($this->getUser());
 
             if ($etat = $etatRepository->findOneBy(['libelle' => 'Créée'])) {
-                $sortie->setEtatRelation($etat);
+                $sortie->setEtat($etat);
             }
 
             $em->persist($sortie);
             $em->flush();
 
-            return $this->redirectToRoute('sortie_index');
+            return $this->redirectToRoute('app_sortie_index');
         }
 
         $status = $form->isSubmitted() ? 422 : 200;
 
-        return $this->render('sortie/createSortie.html.twig', [
+        return $this->render('sortie/new.html.twig', [
             'form' => $form->createView(),
         ], new Response(status: $status));
+    }
+
+    #[Route('/sortie/{id}', name: 'app_sortie_show', methods: ['GET'])]
+    public function show(
+        Sortie $sortie,
+        EtatRepository $etatRepository,
+        EntityManagerInterface $em
+    ): Response {
+        $now = new \DateTimeImmutable();
+
+        $lib = $sortie->getEtat()?->getLibelle();
+
+        if ($lib !== 'Annulée'
+            && $sortie->getDateLimiteInscription()
+            && $sortie->getDateLimiteInscription() <= $now
+            && in_array($lib, ['Créée', 'Ouverte'], true)) {
+
+            if ($etatCloturee = $etatRepository->findOneBy(['libelle' => 'Clôturée'])) {
+                $sortie->setEtat($etatCloturee);
+                $em->flush();
+            }
+        }
+
+        $notes = $sortie->getNote();
+        $moy = $notes->count() ? array_sum(array_map(fn($r)=>$r->getNote(), $notes->toArray())) / $notes->count() : null;
+        $maNote = null;
+        if ($this->getUser() instanceof \App\Entity\Participant) {
+            foreach ($notes as $r) {
+                if ($r->getParticipant()->getId() === $this->getUser()->getId()) {
+                    $maNote = $r->getNote();
+                    break;
+                }
+            }
+        }
+
+        return $this->render('sortie/show.html.twig', [
+            's'  => $sortie,
+            'me' => $this->getUser(),
+            'avgNote' => $moy,
+            'myNote' => $maNote,
+        ]);
+    }
+
+    #[Route('/{id}/annuler', name: 'app_sortie_annuler', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function annuler(
+        Sortie $sortie,
+        Request $request,
+        EtatRepository $etatRepository,
+        EntityManagerInterface $em
+    ) {
+        if (!$this->isCsrfTokenValid('cancel'.$sortie->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $me = $this->getUser();
+        if (!$me instanceof \App\Entity\Participant) {
+            throw $this->createAccessDeniedException('Utilisateur non valide.');
+        }
+
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+
+        $isOrganisateur = $sortie->getParticipantOrganisateur()
+            && $sortie->getParticipantOrganisateur()->getId() === $me->getId();
+
+        if (!($isAdmin || $isOrganisateur)) {
+            $this->addFlash('error', 'Vous ne pouvez pas annuler cette sortie.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $now = new \DateTimeImmutable();
+        if ($sortie->getDateHeureDebut() && $sortie->getDateHeureDebut() <= $now) {
+            $this->addFlash('error', 'La sortie a déjà commencé : annulation impossible.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $motif = trim($request->request->get('motif', ''));
+
+        $etatAnnulee = $etatRepository->findOneBy(['libelle' => 'Annulée']);
+        if (!$etatAnnulee) {
+            $this->addFlash('error', 'État "Annulée" introuvable.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $sortie->setEtat($etatAnnulee);
+
+        if (method_exists($sortie, 'setMotifAnnulation')) {
+            $sortie->setMotifAnnulation($motif ?: null);
+        }
+
+        $em->flush();
+
+        return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+    }
+
+    #[Route('/{id}/publier', name: 'app_sortie_publier', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function publier(
+        Sortie $sortie,
+        Request $request,
+        EtatRepository $etatRepository,
+        EntityManagerInterface $em
+    ) {
+        if (!$this->isCsrfTokenValid('publish'.$sortie->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $me = $this->getUser();
+        if (!$sortie->getParticipantOrganisateur() || $sortie->getParticipantOrganisateur()->getId() !== $me->getId()) {
+            $this->addFlash('error', 'Vous ne pouvez pas publier cette sortie.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        if (!$sortie->getEtat() || $sortie->getEtat()->getLibelle() !== 'Créée') {
+            $this->addFlash('error', 'Seules les sorties à l’état "Créée" peuvent être publiées.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $etatOuverte = $etatRepository->findOneBy(['libelle' => 'Ouverte']);
+        if (!$etatOuverte) {
+            $this->addFlash('error', 'État "Ouverte" introuvable.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $sortie->setEtat($etatOuverte);
+        $em->flush();
+
+        $this->addFlash('success', 'La sortie a été publiée (ouverte aux inscriptions).');
+        return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+    }
+
+    #[Route('/{id}/inscrire', name: 'app_sortie_inscrire', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function inscrire(
+        Sortie $sortie,
+        Request $request,
+        EntityManagerInterface $em,
+        EtatRepository $etatRepo
+    ): Response {
+        if (!$this->isCsrfTokenValid('inscrire'.$sortie->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $user = $this->getUser();
+
+        if (!$user instanceof \App\Entity\Participant) {
+            throw $this->createAccessDeniedException('Utilisateur non valide.');
+        }
+
+        $participantId = $user->getId();
+
+        if (!$sortie->getEtat() || strtolower(trim($sortie->getEtat()->getLibelle())) !== 'ouverte') {
+            $this->addFlash('error', 'Cette sortie n\'est pas ouverte à l\'inscription pour l\'instant. État actuel : ' . ($sortie->getEtat() ? $sortie->getEtat()->getLibelle() : 'null'));
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $conn = $em->getConnection();
+        $sql = 'SELECT COUNT(*) as count FROM sortie_participant WHERE sortie_id = :sortie_id AND participant_id = :participant_id';
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery(['sortie_id' => $sortie->getId(), 'participant_id' => $participantId]);
+        $alreadyRegistered = $result->fetchOne() > 0;
+
+        if ($alreadyRegistered) {
+            $this->addFlash('warning', 'Vous êtes déjà inscrit à cette sortie.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $sqlCount = 'SELECT COUNT(*) as count FROM sortie_participant WHERE sortie_id = :sortie_id';
+        $stmtCount = $conn->prepare($sqlCount);
+        $resultCount = $stmtCount->executeQuery(['sortie_id' => $sortie->getId()]);
+        $currentCount = $resultCount->fetchOne();
+
+        if ($currentCount >= $sortie->getNbInscriptionsMax()) {
+            $this->addFlash('error', 'Cette sortie est complète.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $now = new \DateTime();
+        if ($sortie->getDateLimiteInscription() && $sortie->getDateLimiteInscription() < $now) {
+            $this->addFlash('error', 'La date limite d\'inscription est dépassée.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        try {
+            $sqlInsert = 'INSERT INTO sortie_participant (sortie_id, participant_id) VALUES (:sortie_id, :participant_id)';
+            $stmtInsert = $conn->prepare($sqlInsert);
+            $stmtInsert->executeStatement([
+                'sortie_id' => $sortie->getId(),
+                'participant_id' => $participantId
+            ]);
+
+            $sqlCountAfter = 'SELECT COUNT(*) FROM sortie_participant WHERE sortie_id = :sid';
+            $countAfter = (int)$conn->prepare($sqlCountAfter)->executeQuery(['sid' => $sortie->getId()])->fetchOne();
+
+            if ($sortie->getNbInscriptionsMax() !== null && $countAfter >= $sortie->getNbInscriptionsMax()) {
+                $etatCloturee = $etatRepo->findOneBy(['libelle' => 'Clôturée']);
+                if ($etatCloturee) {
+                    $sortie->setEtat($etatCloturee);
+                    $em->flush(); // persiste le changement d’état
+                }
+            }
+
+            $this->addFlash('success', 'Inscription réussie !');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de l\'inscription : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+    }
+
+    #[Route('/{id}/desister', name: 'app_sortie_desister', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function desister(
+        Sortie $sortie,
+        Request $request,
+        EntityManagerInterface $em,
+        EtatRepository $etatRepo
+    ): Response {
+        if (!$this->isCsrfTokenValid('desister'.$sortie->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $user = $this->getUser();
+
+        if (!$user instanceof \App\Entity\Participant) {
+            throw $this->createAccessDeniedException('Utilisateur non valide.');
+        }
+
+        $participant = $em->getRepository(\App\Entity\Participant::class)->find($user->getId());
+
+        if (!$participant) {
+            throw $this->createNotFoundException('Participant introuvable.');
+        }
+
+        if (!$sortie->getParticipantInscrit()->contains($participant)) {
+            $this->addFlash('warning', 'Vous n\'êtes pas inscrit à cette sortie.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $now = new \DateTime();
+        if ($sortie->getDateHeureDebut() && $sortie->getDateHeureDebut() <= $now) {
+            $this->addFlash('error', 'La sortie a déjà commencé, vous ne pouvez plus vous désister.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $sortie->removeParticipantInscrit($participant);
+
+        $em->flush();
+
+        $conn = $em->getConnection();
+        $countNow = (int)$conn->prepare('SELECT COUNT(*) FROM sortie_participant WHERE sortie_id = :sid')
+            ->executeQuery(['sid' => $sortie->getId()])
+            ->fetchOne();
+
+        $max = $sortie->getNbInscriptionsMax() ?? PHP_INT_MAX;
+
+        $now = new \DateTimeImmutable('now');
+        $limit = $sortie->getDateLimiteInscription(); // \DateTimeInterface|null
+        $limitPassed = $limit ? ($limit < $now->setTime(0,0)) : false;
+
+        if ($countNow >= $max) {
+            $etat = $etatRepo->findOneBy(['libelle' => 'Clôturée']);
+            if ($etat) {
+                $sortie->setEtat($etat);
+                $em->flush();
+            }
+        } else {
+            if ($limitPassed) {
+                $etat = $etatRepo->findOneBy(['libelle' => 'Clôturée']);
+            } else {
+                $etat = $etatRepo->findOneBy(['libelle' => 'Ouverte']);
+            }
+            if ($etat) {
+                $sortie->setEtat($etat);
+                $em->flush();
+            }
+        }
+
+        $this->addFlash('success', 'Vous vous êtes désisté de cette sortie.');
+        return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+    }
+
+    #[Route('/{id}/edit', name: 'app_sortie_edit', methods: ['GET','POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function edit(Sortie $sortie, Request $request, EntityManagerInterface $em): Response
+    {
+        $me = $this->getUser();
+
+        if (!$sortie->getParticipantOrganisateur() || $sortie->getParticipantOrganisateur()->getId() !== $me->getId()) {
+            $this->addFlash('error', 'Vous ne pouvez pas modifier cette sortie.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        if (!$sortie->getEtat() || $sortie->getEtat()->getLibelle() !== 'Créée') {
+            $this->addFlash('error', 'Seules les sorties à l’état "Créée" sont modifiables.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        $form = $this->createForm(SortieType::class, $sortie);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->flush();
+            $this->addFlash('success', 'Sortie mise à jour.');
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        return $this->render('sortie/edit.html.twig', [
+            'form' => $form->createView(),
+            's'    => $sortie,
+            'me'   => $me,
+        ]);
     }
 
 }

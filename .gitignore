@@ -143,4 +143,7 @@ fabric.properties
 .env.test
 .env
 .env.dev
+.env.local
+
 # End of https://www.toptal.com/developers/gitignore/api/jetbrains+all,symfony
+/public/images/profils/*

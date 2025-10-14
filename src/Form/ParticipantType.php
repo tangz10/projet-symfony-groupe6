@@ -7,8 +7,10 @@ use App\Entity\Site;
 use App\Entity\Sortie;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Vich\UploaderBundle\Form\Type\VichImageType;
 
 class ParticipantType extends AbstractType
 {
@@ -17,16 +19,29 @@ class ParticipantType extends AbstractType
         $builder
             ->add('email')
             // ->add('roles')
-            // ->add('password')
+            ->add('password', PasswordType::class, [
+                'required' => false,
+                'mapped' => false,
+            ])
             ->add('nom')
             ->add('prenom')
+            ->add('pseudo')
             ->add('telephone')
+            ->add('photoProfilFile', VichImageType::class, [
+                'required' => false,
+                'allow_delete' => false,
+                'download_uri' => false,
+                'image_uri' => false,
+                'label' => 'Photo de profil'
+            ])
+
             ->add('administrateur')
             ->add('actif')
-            /* ->add('Site', EntityType::class, [
+            ->add('site', EntityType::class, [
                 'class' => Site::class,
-                'choice_label' => 'id',
+                'choice_label' => 'nom',
             ])
+            /*
             ->add('ParticipantsInscrits', EntityType::class, [
                 'class' => Sortie::class,
                 'choice_label' => 'id',

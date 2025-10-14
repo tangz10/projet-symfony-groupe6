@@ -1,0 +1,104 @@
+<?php
+
+namespace App\EventListener;
+
+use App\Message\ArchiveSortiesMessage;
+use App\Service\ArchivageSortiesService;
+use Doctrine\DBAL\Connection;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
+use Psr\Log\LoggerInterface;
+use Symfony\Contracts\Cache\CacheInterface;
+
+#[AsEventListener(event: KernelEvents::REQUEST, priority: 1000)]
+class ArchiveSchedulerListener
+{
+    private bool $initialized = false;
+
+    public function __construct(
+        private MessageBusInterface $messageBus,
+        private Connection $connection,
+        private LoggerInterface $logger,
+        private ArchivageSortiesService $archivageService,
+        private CacheInterface $cache,
+        private string $archiveTime = '23:30:00',
+        private int $fallbackIntervalMinutes = 1440
+    ) {
+    }
+
+    public function __invoke(RequestEvent $event): void
+    {
+        // Ne s'exécute qu'une seule fois par démarrage de l'application sur la requête principale
+        if ($this->initialized || !$event->isMainRequest()) {
+            return;
+        }
+
+        $this->initialized = true;
+
+        $now = new \DateTime('now', new \DateTimeZone('Europe/Paris'));
+        $scheduledTimeToday = new \DateTime('today ' . $this->archiveTime, new \DateTimeZone('Europe/Paris'));
+
+        // Fallback périodique SANS worker: à partir de l'heure planifiée du jour,
+        // on exécute l'archivage toutes les X minutes (configurable), mémorisé via le cache.
+        if ($now >= $scheduledTimeToday) {
+            $cacheKey = 'archive_fallback_tick_' . $now->format('Y-m-d');
+            $this->cache->get($cacheKey, function ($item) use ($now) {
+                // Re-déclenchement selon l'intervalle paramétré (minutes)
+                $item->expiresAfter($this->fallbackIntervalMinutes * 60);
+
+                $count = $this->archivageService->archiveOldSorties();
+                $this->logger->info(sprintf('[FALLBACK] Archivage exécuté (%d élément(s)) — intervalle %d min', $count, $this->fallbackIntervalMinutes));
+
+                return true;
+            });
+        }
+
+        // Si un message d'archivage est déjà planifié, ne rien faire
+        if ($this->hasScheduledArchive()) {
+            return;
+        }
+
+        // Planifier le prochain archivage (utile si un worker tourne)
+        $this->scheduleNextArchiveFrom($now);
+    }
+
+    private function hasScheduledArchive(): bool
+    {
+        try {
+            $result = $this->connection->fetchOne(
+                "SELECT COUNT(*) FROM messenger_messages WHERE queue_name = 'default' AND delivered_at IS NULL AND body LIKE '%ArchiveSortiesMessage%'"
+            );
+
+            return $result > 0;
+        } catch (\Exception $e) {
+            // Si la table n'existe pas encore, on retourne false
+            return false;
+        }
+    }
+
+    private function scheduleNextArchiveFrom(\DateTimeInterface $now): void
+    {
+        $scheduledTime = new \DateTime('today ' . $this->archiveTime, new \DateTimeZone('Europe/Paris'));
+
+        // Si on est déjà passé à l'heure prévue, planifier pour demain
+        if ($now > $scheduledTime) {
+            $scheduledTime->modify('+1 day');
+        }
+
+        $delay = $scheduledTime->getTimestamp() - $now->getTimestamp();
+        $delayInMilliseconds = $delay * 1000;
+
+        $message = new ArchiveSortiesMessage($scheduledTime);
+        $this->messageBus->dispatch($message, [
+            new DelayStamp($delayInMilliseconds)
+        ]);
+
+        $this->logger->info(sprintf(
+            '[AUTO-INIT] Archivage planifié pour %s',
+            $scheduledTime->format('d/m/Y à H:i:s')
+        ));
+    }
+}

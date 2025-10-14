@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\Participant;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
@@ -14,7 +16,7 @@ class SecurityController extends AbstractController
     {
 
         if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
-            return $this->redirectToRoute('sortie_index');
+            return $this->redirectToRoute('app_index');
         }
 
         // get the login error if there is one

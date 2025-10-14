@@ -24,6 +24,7 @@ class SortieRepository extends ServiceEntityRepository
             ->leftJoin('s.participantOrganisateur', 'org')->addSelect('org')
             ->leftJoin('s.participantInscrit', 'inscrits')->addSelect('inscrits')
             ->leftJoin('s.lieu', 'lieu')->addSelect('lieu')
+            ->andWhere('s.archivee = false')
             ->orderBy('s.dateHeureDebut', 'ASC');
 
         if (!empty($filters['site'])) {
@@ -57,6 +58,15 @@ class SortieRepository extends ServiceEntityRepository
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    public function findNonArchivees(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->where('s.archivee = false')
+            ->orderBy('s.dateHeureDebut', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 
 //    /**
