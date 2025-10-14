@@ -74,9 +74,6 @@ class Sortie
     #[ORM\OneToMany(targetEntity: Note::class, mappedBy: 'sortie')]
     private Collection $note;
 
-    #[ORM\Column(type: 'boolean', options: ['default' => false])]
-    private bool $archivee = false;
-
     public function __construct()
     {
         $this->participantInscrit = new ArrayCollection();
