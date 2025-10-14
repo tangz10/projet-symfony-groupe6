@@ -14,6 +14,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Attribute\Security; // ✅ important !
 
 #[Route('/participant')]
+#[IsGranted('IS_AUTHENTICATED_FULLY')]
 final class ParticipantController extends AbstractController
 {
     #[Route(name: 'app_participant_index', methods: ['GET'])]
