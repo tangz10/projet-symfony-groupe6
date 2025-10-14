@@ -25,6 +25,7 @@ class ParticipantType extends AbstractType
             ])
             ->add('nom')
             ->add('prenom')
+            ->add('pseudo')
             ->add('telephone')
             ->add('photoProfilFile', VichImageType::class, [
                 'required' => false,
