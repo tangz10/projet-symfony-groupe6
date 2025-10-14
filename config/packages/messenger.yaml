@@ -7,7 +7,9 @@ framework:
             async:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
+                    # En MySQL, use_notify est ignoré (utile surtout avec PostgreSQL)
                     use_notify: true
+                    # Vérifie les messages différés toutes les 60s
                     check_delayed_interval: 60000
                 retry_strategy:
                     max_retries: 3
