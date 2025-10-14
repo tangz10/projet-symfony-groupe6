@@ -52,7 +52,7 @@ final class ParticipantController extends AbstractController
 
         $user = $this->getUser();
 
-        if (!$this->isGranted('ROLE_ADMIN') && $user->getId() !== $participant->getId()) {
+        if (!$this->isGranted('ROLE_ADMIN') && (!$user || $user->getId() !== $participant->getId())) {
             throw $this->createAccessDeniedException('Accès refusé');
         }
 
@@ -67,7 +67,7 @@ final class ParticipantController extends AbstractController
 
         $user = $this->getUser();
 
-        if (!$this->isGranted('ROLE_ADMIN') && $user->getId() !== $participant->getId()) {
+        if (!$this->isGranted('ROLE_ADMIN') && (!$user || $user->getId() !== $participant->getId())) {
             throw $this->createAccessDeniedException('Accès refusé');
         }
 
