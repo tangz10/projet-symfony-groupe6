@@ -17,13 +17,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use App\Message\RefreshOneSortieStateMessage;
+use App\Service\MeteoService;
 
 #[Route('/sortie')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class SortieController extends AbstractController
 {
     #[Route(name: 'app_sortie_index', methods: ['GET'])]
-    public function index(Request $request, SortieRepository $repo): Response
+    public function index(Request $request, SortieRepository $repo, MeteoService $meteo): Response
     {
         $form = $this->createForm(SortieFilterType::class);
         $form->handleRequest($request);
@@ -33,10 +34,49 @@ class SortieController extends AbstractController
 
         $sorties = $repo->findForListing($filters, $user);
 
+        $meteos = [];
+        foreach ($sorties as $s) {
+            $d = $s->getDateHeureDebut();
+            $lieu = $s->getLieu();
+
+            $reason = null;
+            if (!$d) {
+                $reason = 'Date de sortie inconnue';
+            } elseif (!$lieu) {
+                $reason = 'Lieu de la sortie inconnu';
+            } elseif ($lieu->getLatitude() === null || $lieu->getLongitude() === null) {
+                $reason = 'Coordonnées du lieu manquantes';
+            } else {
+                $dt = \DateTimeImmutable::createFromMutable($d);
+                $fc = $meteo->getDailyForecast($dt, (float)$lieu->getLatitude(), (float)$lieu->getLongitude());
+
+                if ($fc) {
+                    $meteos[$s->getId()] = $fc;
+                    continue;
+                }
+
+                $today0 = new \DateTimeImmutable('today');
+                $days = (int)$today0->diff($dt->setTime(0,0))->format('%r%a');
+
+                if ($days > 15) {
+                    $reason = 'Date trop lointaine (prévision au-delà de 16 jours)';
+                } elseif ($days < -60) {
+                    $reason = 'Historique indisponible pour cette date';
+                } else {
+                    $reason = 'Aucune donnée météo fournie par l’API pour cette date';
+                }
+            }
+
+            if ($reason) {
+                $meteos[$s->getId()] = ['na_reason' => $reason];
+            }
+        }
+
         return $this->render('sortie/index.html.twig', [
-            'form' => $form->createView(),
+            'form'    => $form->createView(),
             'sorties' => $sorties,
-            'me' => $user,
+            'me'      => $user,
+            'meteo'  => $meteos,
         ]);
     }
 
@@ -72,7 +112,8 @@ class SortieController extends AbstractController
     public function show(
         Sortie $sortie,
         EtatRepository $etatRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MeteoService $meteo
     ): Response {
         $now = new \DateTimeImmutable();
 
@@ -101,11 +142,23 @@ class SortieController extends AbstractController
             }
         }
 
+        if ($sortie->getLieu()?->getLatitude() !== null
+            && $sortie->getLieu()?->getLongitude() !== null
+            && $sortie->getDateHeureDebut() instanceof \DateTimeInterface) {
+
+            $meteoNow = $meteo->getDailyForecast(
+                $sortie->getDateHeureDebut(),
+                (float)$sortie->getLieu()->getLatitude(),
+                (float)$sortie->getLieu()->getLongitude()
+            );
+        }
+
         return $this->render('sortie/show.html.twig', [
             's'  => $sortie,
             'me' => $this->getUser(),
             'avgNote' => $moy,
             'myNote' => $maNote,
+            'meteo' => $meteoNow,
         ]);
     }
 
