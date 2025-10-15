@@ -4,9 +4,11 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    archive_time: '15:25:00'
+    archive_time: '11:26:00'
     # Intervalle du fallback en minutes (1440 = 1 jour). Mettre 5 pour la démo.
-    archive_fallback_interval_minutes: 5
+    archive_fallback_interval_minutes: 1440
+    # Intervalle (minutes) de rafraîchissement des états (batch + fallback)
+    state_refresh_interval_minutes: 5
 
 services:
     # default configuration for services in *this* file
@@ -27,6 +29,10 @@ services:
     App\MessageHandler\ArchiveSortiesMessageHandler:
         arguments:
             $archiveTime: '%archive_time%'
+
+    App\EventListener\StatusRefreshSchedulerListener:
+        arguments:
+            $intervalMinutes: '%state_refresh_interval_minutes%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
