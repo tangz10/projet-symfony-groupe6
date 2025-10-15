@@ -65,14 +65,14 @@ class Sortie
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $motifAnnulation = null;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $archivee = false;
+
     /**
      * @var Collection<int, Note>
      */
     #[ORM\OneToMany(targetEntity: Note::class, mappedBy: 'sortie')]
     private Collection $note;
-
-    #[ORM\Column(type: 'boolean', options: ['default' => false])]
-    private bool $archivee = false;
 
     public function __construct()
     {
