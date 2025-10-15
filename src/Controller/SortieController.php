@@ -15,6 +15,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
+use App\Message\RefreshOneSortieStateMessage;
 
 #[Route('/sortie')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -113,7 +115,8 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EtatRepository $etatRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MessageBusInterface $bus
     ) {
         if (!$this->isCsrfTokenValid('cancel'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
@@ -157,6 +160,9 @@ class SortieController extends AbstractController
 
         $em->flush();
 
+        // Rafraîchissement asynchrone de l'état
+        $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
+
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
 
@@ -166,7 +172,8 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EtatRepository $etatRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MessageBusInterface $bus
     ) {
         if (!$this->isCsrfTokenValid('publish'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
@@ -193,6 +200,9 @@ class SortieController extends AbstractController
         $sortie->setEtat($etatOuverte);
         $em->flush();
 
+        // Tick de recalcul
+        $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
+
         $this->addFlash('success', 'La sortie a été publiée (ouverte aux inscriptions).');
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
@@ -203,7 +213,8 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EntityManagerInterface $em,
-        EtatRepository $etatRepo
+        EtatRepository $etatRepo,
+        MessageBusInterface $bus
     ): Response {
         if (!$this->isCsrfTokenValid('inscrire'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
@@ -270,6 +281,9 @@ class SortieController extends AbstractController
             }
 
             $this->addFlash('success', 'Inscription réussie !');
+
+            // Recalcul asynchrone (peut rouvrir/fermer selon règles)
+            $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
         } catch (\Exception $e) {
             $this->addFlash('error', 'Erreur lors de l\'inscription : ' . $e->getMessage());
         }
@@ -283,7 +297,8 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EntityManagerInterface $em,
-        EtatRepository $etatRepo
+        EtatRepository $etatRepo,
+        MessageBusInterface $bus
     ): Response {
         if (!$this->isCsrfTokenValid('desister'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
@@ -347,6 +362,10 @@ class SortieController extends AbstractController
         }
 
         $this->addFlash('success', 'Vous vous êtes désisté de cette sortie.');
+
+        // Recalcul asynchrone après désistement
+        $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
+
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
 
