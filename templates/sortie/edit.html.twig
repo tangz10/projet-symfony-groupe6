@@ -1,84 +1,126 @@
+{# templates/sortie/edit.html.twig #}
 {% extends 'base.html.twig' %}
 
 {% block title %}Modifier une sortie{% endblock %}
 
 {% block body %}
-    <div class="flex-1 overflow-y-auto">
-        <div class="max-w-7xl mx-auto px-4 py-6">
-            <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 md:p-8">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                    <h1 class="text-2xl md:text-3xl font-semibold text-gray-800">Modifier une sortie</h1>
+    <div class="relative mt-15 min-h-[100svh] h-[100svh] flex items-start justify-center bg-gradient-to-br from-gray-50 to-white">
+        <div class="w-full max-w-5xl mt-10 mb-6 mx-4">
+            <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl overflow-hidden">
+
+                <div class="relative px-6 md:px-8 py-6 md:py-7 bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                    <div class="pointer-events-none absolute -top-10 -right-10 w-64 h-64 rounded-full bg-white/10"></div>
+                    <div class="pointer-events-none absolute -bottom-16 -left-16 w-40 h-40 rounded-full bg-white/10"></div>
+
+                    <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-2xl md:text-3xl font-semibold">Modifier une sortie</h1>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm">
+                                Édition
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
-                {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
+                <div class="p-6 md:p-8">
+                    {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-
-                    <div class="space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 items-start">
+                        {# ligne 1 #}
                         <div>
                             {{ form_label(form.nom, 'Nom de la sortie', {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
-                            {{ form_widget(form.nom, {'attr': {'class': 'w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-600 focus:outline-none'}}) }}
+                            {{ form_widget(form.nom, {'attr': {'class': 'w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:ring-2 focus:ring-purple-600 focus:border-purple-600 focus:outline-none'}}) }}
                             {{ form_errors(form.nom) }}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-6">
+                                <div class="flex-shrink-0">
+                                    {% if s.photo %}
+                                        <img src="{{ asset('images/sorties/' ~ s.photo) }}"
+                                             alt="Photo de la sortie"
+                                             class="h-16 w-16 rounded-xl object-cover border-2 border-purple-100 shadow-sm">
+                                    {% else %}
+                                        <div class="h-16 w-16 rounded-xl bg-purple-100 flex items-center justify-center">
+                                            <svg class="h-7 w-7 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V8l-4-5H4z"/>
+                                            </svg>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-1">
+                                    {{ form_label(form.photoFile, 'Photo de la sortie', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+                                    {{ form_widget(form.photoFile, {'attr': {
+                                        'class': 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer'
+                                    }}) }}
+                                    {{ form_errors(form.photoFile) }}
+                                    <div class="mt-1 flex items-center gap-4">
+                                        <p class="text-xs text-gray-500 m-0">JPG, PNG ou GIF (max. 2 Mo)</p>
+                                        {% if s.photo %}
+                                            <label class="inline-flex items-center group cursor-pointer whitespace-nowrap">
+                                                <input type="checkbox" name="delete_photo" value="1" class="peer sr-only">
+                                                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                                                <span class="ml-3 text-xs font-medium text-gray-700 group-hover:text-red-600 transition-colors">Supprimer la photo</span>
+                                            </label>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div>
                             {{ form_label(form.dateHeureDebut, 'Date et heure de la sortie', {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
-                            {{ form_widget(form.dateHeureDebut, {'attr': {'class': 'w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-600 focus:outline-none'}}) }}
+                            {{ form_widget(form.dateHeureDebut, {'attr': {'class': 'w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:ring-2 focus:ring-purple-600 focus:border-purple-600 focus:outline-none'}}) }}
                             {{ form_errors(form.dateHeureDebut) }}
                         </div>
-
-                        <div>
-                            {{ form_label(form.dateLimiteInscription, "Date limite d'inscription", {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
-                            {{ form_widget(form.dateLimiteInscription, {'attr': {'class': 'w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-600 focus:outline-none'}}) }}
-                            {{ form_errors(form.dateLimiteInscription) }}
-                        </div>
-
-                        <div>
-                            {{ form_label(form.nbInscriptionsMax, 'Nombre de places', {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
-                            {{ form_widget(form.nbInscriptionsMax, {'attr': {'class': 'w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-600 focus:outline-none'}}) }}
-                            {{ form_errors(form.nbInscriptionsMax) }}
-                        </div>
-
-                        <div>
-                            {{ form_label(form.duree, 'Durée (minutes)', {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
-                            {{ form_widget(form.duree, {'attr': {'class': 'w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-600 focus:outline-none'}}) }}
-                            {{ form_errors(form.duree) }}
-                        </div>
-                    </div>
-
-                    <div class="space-y-3">
                         <div>
                             {{ form_label(form.site, 'Site organisateur', {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
-                            {{ form_widget(form.site, {'attr': {'class': 'w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-600 focus:outline-none'}}) }}
+                            {{ form_widget(form.site, {'attr': {'class': 'w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:ring-2 focus:ring-purple-600 focus:border-purple-600 focus:outline-none'}}) }}
                             {{ form_errors(form.site) }}
                         </div>
 
                         <div>
+                            {{ form_label(form.dateLimiteInscription, "Date limite d'inscription", {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
+                            {{ form_widget(form.dateLimiteInscription, {'attr': {'class': 'w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:ring-2 focus:ring-purple-600 focus:border-purple-600 focus:outline-none'}}) }}
+                            {{ form_errors(form.dateLimiteInscription) }}
+                        </div>
+                        <div>
                             {{ form_label(form.lieu, 'Lieu', {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
-                            {{ form_widget(form.lieu, {'attr': {'class': 'w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-600 focus:outline-none'}}) }}
+                            {{ form_widget(form.lieu, {'attr': {'class': 'w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:ring-2 focus:ring-purple-600 focus:border-purple-600 focus:outline-none'}}) }}
                             {{ form_errors(form.lieu) }}
                         </div>
 
                         <div>
+                            {{ form_label(form.nbInscriptionsMax, 'Nombre de places', {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
+                            {{ form_widget(form.nbInscriptionsMax, {'attr': {'class': 'w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:ring-2 focus:ring-purple-600 focus:border-purple-600 focus:outline-none'}}) }}
+                            {{ form_errors(form.nbInscriptionsMax) }}
+                        </div>
+                        <div class="md:row-span-2">
                             {{ form_label(form.infosSortie, 'Description et infos', {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
-                            {{ form_widget(form.infosSortie, {'attr': {'class': 'w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-600 focus:outline-none', 'rows': 8}}) }}
+                            {{ form_widget(form.infosSortie, {'attr': {'class': 'w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:ring-2 focus:ring-purple-600 focus:border-purple-600 focus:outline-none', 'rows': 5}}) }}
                             {{ form_errors(form.infosSortie) }}
                         </div>
+
+                        {# ligne 5 #}
+                        <div>
+                            {{ form_label(form.duree, 'Durée (minutes)', {'label_attr': {'class': 'text-sm text-gray-600'}}) }}
+                            {{ form_widget(form.duree, {'attr': {'class': 'w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:ring-2 focus:ring-purple-600 focus:border-purple-600 focus:outline-none'}}) }}
+                            {{ form_errors(form.duree) }}
+                        </div>
                     </div>
-                </div>
 
-                <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                    <button type="submit"
-                            class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
-                        Enregistrer les modifications
-                    </button>
-                    <a href="{{ path('app_sortie_show', {'id': s.id}) }}"
-                       class="h-11 px-6 flex items-center justify-center rounded-full border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 shadow-sm">
-                        Annuler
-                    </a>
-                </div>
+                    <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+                        <button type="submit"
+                                class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
+                            Enregistrer
+                        </button>
+                        <a href="{{ path('app_sortie_show', {'id': s.id}) }}"
+                           class="h-11 px-6 flex items-center justify-center rounded-full border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 shadow-sm">
+                            Annuler
+                        </a>
+                    </div>
 
-                {{ form_end(form) }}
+                    {{ form_end(form) }}
+                </div>
             </div>
         </div>
     </div>

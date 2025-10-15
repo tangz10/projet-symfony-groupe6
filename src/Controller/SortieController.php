@@ -103,6 +103,7 @@ class SortieController extends AbstractController
 
         return $this->render('sortie/new.html.twig', [
             'form' => $form->createView(),
+            's'    => $sortie,
         ], new Response(status: $status));
     }
 
@@ -423,6 +424,13 @@ class SortieController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            // 👇 même logique que ParticipantController
+            if ($request->request->get('delete_photo') === '1') {
+                $sortie->setPhotoFile(null);
+                $sortie->setPhoto(null);
+            }
+
             $em->flush();
             $this->addFlash('success', 'Sortie mise à jour.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
@@ -434,5 +442,4 @@ class SortieController extends AbstractController
             'me'   => $me,
         ]);
     }
-
 }
