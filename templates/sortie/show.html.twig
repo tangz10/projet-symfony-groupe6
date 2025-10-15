@@ -26,6 +26,7 @@
                         {% set eventTs = s.dateHeureDebut ? s.dateHeureDebut|date('U') : null %}
                         {% set nowTs   = "now"|date('U') %}
                         {% set daysAhead = (eventTs and nowTs) ? ((eventTs - nowTs) / 86400) : null %}
+                        {% set canTryRegister = isOuverte and not afterClosure and not isEnCours and not isCloturee and not isAnnulee and not isComplet and beforeStart and not inscrit %}
 
                         <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
                             <div class="flex items-center gap-3">
@@ -33,6 +34,7 @@
                                     Afficher une sortie
                                 </h1>
 
+                                {# Bouton Modifier: état initial (organisateur + "Créée") #}
                                 {% if isOrganisateur and isCreee %}
                                     <a href="{{ path('app_sortie_edit', {'id': s.id}) }}"
                                        class="inline-flex items-center justify-center w-10 h-10 rounded-full border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition"
@@ -222,8 +224,10 @@
 
                             {% set isOuverte = s.etat and (s.etat.libelle|trim|lower == 'ouverte') %}
                             <div class="mt-6 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                                {# État initial: pas de CTA anonyme d’inscription #}
+
                                 {% if me and not isOrganisateur %}
-                                    {% if isOuverte and not afterClosure and not isEnCours and not isCloturee and not isAnnulee and not inscrit and not isComplet %}
+                                    {% if canTryRegister %}
                                         <form method="post" action="{{ path('app_sortie_inscrire', {id: s.id}) }}" class="w-full sm:w-auto" style="display:inline;">
                                             <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ s.id) }}">
                                             <button type="submit" class="w-full h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
