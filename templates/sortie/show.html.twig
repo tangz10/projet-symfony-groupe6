@@ -23,6 +23,9 @@
                         {% set isComplet = s.nbInscriptionsMax is not null and inscritsCount >= s.nbInscriptionsMax %}
                         {% set beforeStart = s.dateHeureDebut is empty or s.dateHeureDebut > 'now'|date %}
                         {% set isAdmin = is_granted('ROLE_ADMIN') %}
+                        {% set eventTs = s.dateHeureDebut ? s.dateHeureDebut|date('U') : null %}
+                        {% set nowTs   = "now"|date('U') %}
+                        {% set daysAhead = (eventTs and nowTs) ? ((eventTs - nowTs) / 86400) : null %}
 
                         <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
                             <div class="flex items-center gap-3">
@@ -264,8 +267,7 @@
                                 {% if (isOrganisateur or isAdmin) and not isAnnulee and isCreee %}
                                     <form method="post" action="{{ path('app_sortie_annuler', {'id': s.id}) }}" class="w-full sm:w-auto">
                                         <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ s.id) }}">
-                                        <button type="submit"
-                                                class="w-full h-11 px-6 rounded-full border border-red-600 text-red-600 bg-white hover:bg-red-50 shadow-sm">
+                                        <button class="w-full h-11 px-6 rounded-full border border-red-600 text-red-600 bg-white hover:bg-red-50 shadow-sm">
                                             Annuler la sortie
                                         </button>
                                     </form>
@@ -299,73 +301,129 @@
             </div>
 
             <aside class="pl-6 pr-8 pt-8 lg:pt-4 lg:sticky lg:top-4">
-                {% set peutNoter = (isPassee or (s.etat and s.etat.libelle == 'Terminée')) and inscrit %}
-                {% set ratings = s.note ?? [] %}
-                {% set totalNotes = ratings|length %}
-                {% set somme = 0 %}
-                {% for r in ratings %}{% set somme = somme + r.note %}{% endfor %}
-                {% set moyenne = totalNotes > 0 ? (somme / totalNotes) : null %}
+                <div class="space-y-4">
+                    {% set peutNoter = (isPassee or (s.etat and s.etat.libelle == 'Terminée')) and inscrit %}
+                    {% set ratings = s.note ?? [] %}
+                    {% set totalNotes = ratings|length %}
+                    {% set somme = 0 %}
+                    {% for r in ratings %}{% set somme = somme + r.note %}{% endfor %}
+                    {% set moyenne = totalNotes > 0 ? (somme / totalNotes) : null %}
 
-                <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 md:p-8">
-                    <div class="flex items-center justify-between gap-4">
-                        <div class="min-w-0">
-                            <p class="text-base font-medium text-gray-800">Note de la sortie</p>
-                            {% if moyenne is not null %}
-                                <p class="text-sm text-gray-600">
-                                    Moyenne :
-                                    <span class="font-semibold">{{ moyenne|number_format(1, '.', ' ') }}/5</span>
-                                    ({{ totalNotes }} vote{{ totalNotes > 1 ? 's' : '' }})
-                                </p>
-                            {% else %}
-                                <p class="text-sm text-gray-600">Pas encore de note.</p>
-                            {% endif %}
-                        </div>
-
-                        <div aria-hidden="true" class="shrink-0">
-                            {% set full = moyenne ? moyenne|round(0, 'floor') : 0 %}
-                            {% set half = (moyenne is not null) and (moyenne - full >= 0.5) %}
-                            {% for i in 1..5 %}
-                                {% set filled = i <= full %}
-                                {% set halfHere = (i == full + 1) and half %}
-                                <span class="text-xl sm:text-2xl {{ filled or halfHere ? 'text-yellow-500' : 'text-gray-300' }}">★</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    {% if peutNoter %}
-                        <form method="post" action="{{ path('app_sortie_noter', {id: s.id}) }}" class="mt-3">
-                            <input type="hidden" name="_token" value="{{ csrf_token('rate' ~ s.id) }}">
-
-                            <div class="flex items-center gap-2">
-                                {% for i in 1..5 %}
-                                    <label class="cursor-pointer">
-                                        <input type="radio" name="note" value="{{ i }}" class="hidden" {% if myNote is defined and myNote == i %}checked{% endif %} required>
-                                        <span class="star text-2xl sm:text-3xl {{ myNote is defined and i <= myNote ? 'text-yellow-500' : 'text-gray-300' }}">★</span>
-                                    </label>
-                                {% endfor %}
+                    <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 md:p-8">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="min-w-0">
+                                <p class="text-base font-medium text-gray-800">Note de la sortie</p>
+                                {% if moyenne is not null %}
+                                    <p class="text-sm text-gray-600">
+                                        Moyenne :
+                                        <span class="font-semibold">{{ moyenne|number_format(1, '.', ' ') }}/5</span>
+                                        ({{ totalNotes }} vote{{ totalNotes > 1 ? 's' : '' }})
+                                    </p>
+                                {% else %}
+                                    <p class="text-sm text-gray-600">Pas encore de note.</p>
+                                {% endif %}
                             </div>
 
-                            <button type="submit" class="mt-3 h-10 px-5 w-full sm:w-auto rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
-                                {% if myNote is defined and myNote %}Mettre à jour ma note{% else %}Envoyer ma note{% endif %}
-                            </button>
-                        </form>
+                            <div aria-hidden="true" class="shrink-0">
+                                {% set full = moyenne ? moyenne|round(0, 'floor') : 0 %}
+                                {% set half = (moyenne is not null) and (moyenne - full >= 0.5) %}
+                                {% for i in 1..5 %}
+                                    {% set filled = i <= full %}
+                                    {% set halfHere = (i == full + 1) and half %}
+                                    <span class="text-xl sm:text-2xl {{ filled or halfHere ? 'text-yellow-500' : 'text-gray-300' }}">★</span>
+                                {% endfor %}
+                            </div>
+                        </div>
 
-                        <script>
-                            (function(){
-                                const form = document.currentScript.previousElementSibling;
-                                const inputs = form.querySelectorAll('input[name="note"]');
-                                const stars  = form.querySelectorAll('.star');
-                                inputs.forEach((r, idx) => {
-                                    r.addEventListener('change', () => {
-                                        stars.forEach((s,i)=>s.classList.toggle('text-yellow-500', i <= idx));
-                                        stars.forEach((s,i)=>s.classList.toggle('text-gray-300', i >  idx));
+                        {% if peutNoter %}
+                            <form method="post" action="{{ path('app_sortie_noter', {id: s.id}) }}" class="mt-3">
+                                <input type="hidden" name="_token" value="{{ csrf_token('rate' ~ s.id) }}">
+                                <div class="flex items-center gap-2">
+                                    {% for i in 1..5 %}
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="note" value="{{ i }}" class="hidden" {% if myNote is defined and myNote == i %}checked{% endif %} required>
+                                            <span class="star text-2xl sm:text-3xl {{ myNote is defined and i <= myNote ? 'text-yellow-500' : 'text-gray-300' }}">★</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                                <button type="submit" class="mt-3 h-10 px-5 w-full sm:w-auto rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
+                                    {% if myNote is defined and myNote %}Mettre à jour ma note{% else %}Envoyer ma note{% endif %}
+                                </button>
+                            </form>
+
+                            <script>
+                                (function(){
+                                    const form = document.currentScript.previousElementSibling;
+                                    const inputs = form.querySelectorAll('input[name="note"]');
+                                    const stars  = form.querySelectorAll('.star');
+                                    inputs.forEach((r, idx) => {
+                                        r.addEventListener('change', () => {
+                                            stars.forEach((s,i)=>s.classList.toggle('text-yellow-500', i <= idx));
+                                            stars.forEach((s,i)=>s.classList.toggle('text-gray-300', i >  idx));
+                                        });
                                     });
-                                });
-                            })();
-                        </script>
-                        {% elseif not isPassee and inscrit %}
-                        <p class="mt-2 text-sm text-gray-500 italic">Vous pourrez noter une fois la sortie terminée.</p>
-                    {% endif %}
+                                })();
+                            </script>
+                            {% elseif not isPassee and inscrit %}
+                            <p class="mt-2 text-sm text-gray-500 italic">Vous pourrez noter une fois la sortie terminée.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-6 bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 md:p-8">
+                        {% if meteo %}
+                            <div class="flex items-center justify-between">
+                                <p class="text-base font-medium text-gray-800">
+                                    {% if meteo.date > 'now'|date %}Prévision{% else %}Météo{% endif %}
+                                    le {{ meteo.date|date('d/m/Y') }}
+                                </p>
+                                {% set ico = {
+                                    'sun':'☀️','sun-cloud':'🌤️','cloud':'☁️','fog':'🌫️','drizzle':'🌦️',
+                                    'rain':'🌧️','rain-ice':'🌧️❄️','snow':'🌨️','showers':'🌦️','storm':'⛈️','hail':'🌩️'
+                                } %}
+                                <span class="text-2xl">{{ ico[meteo.icon] ?? '☁️' }}</span>
+                            </div>
+
+                            <p class="mt-1 text-sm text-gray-600">{{ meteo.label }}</p>
+
+                            <div class="mt-3 grid grid-cols-3 gap-3 text-center">
+                                <div class="rounded-lg bg-gray-50 p-3">
+                                    <div class="text-xs text-gray-500">Min</div>
+                                    <div class="text-lg font-semibold text-gray-900">{{ meteo.tmin|number_format(0) }}°C</div>
+                                </div>
+                                <div class="rounded-lg bg-gray-50 p-3">
+                                    <div class="text-xs text-gray-500">Max</div>
+                                    <div class="text-lg font-semibold text-gray-900">{{ meteo.tmax|number_format(0) }}°C</div>
+                                </div>
+                                <div class="rounded-lg bg-gray-50 p-3">
+                                    <div class="text-xs text-gray-500">Pluie</div>
+                                    <div class="text-lg font-semibold text-gray-900">{{ meteo.pop }}%</div>
+                                </div>
+                            </div>
+
+                            <p class="mt-3 text-xs text-gray-400">
+                                Source : Open-Meteo (lat {{ s.lieu.latitude }}, lon {{ s.lieu.longitude }})
+                            </p>
+                        {% else %}
+                            <div class="flex items-start gap-3">
+                                <div class="text-2xl">ℹ️</div>
+                                <div>
+                                    <p class="text-base font-medium text-gray-800">Prévision indisponible</p>
+                                    <p class="mt-1 text-sm text-gray-600">
+                                        {% if daysAhead is not null and daysAhead > 16 %}
+                                            La date de la sortie est trop éloignée (au-delà d’environ 16 jours), les prévisions ne sont pas encore publiées.
+                                        {% elseif daysAhead is not null and daysAhead < -7 %}
+                                            Cette date est trop ancienne pour que les données quotidiennes soient encore accessibles.
+                                        {% else %}
+                                            Les données météo ne sont pas disponibles pour ce lieu/date pour le moment.
+                                        {% endif %}
+                                    </p>
+                                    <p class="mt-3 text-xs text-gray-400">
+                                        Source : Open-Meteo (lat {{ s.lieu.latitude }}, lon {{ s.lieu.longitude }})
+                                    </p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </aside>
         </div>

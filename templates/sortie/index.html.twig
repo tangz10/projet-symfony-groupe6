@@ -3,6 +3,19 @@
 {% block title %}Sorties{% endblock %}
 
 {% block body %}
+    {% set I = {
+        'sun':'☀️','sun-cloud':'🌤️','cloud':'☁️','fog':'🌫️','drizzle':'🌦️',
+        'rain':'🌧️','rain-ice':'🌧️❄️','snow':'🌨️','showers':'🌦️','storm':'⛈️','hail':'🌩️'
+    } %}
+    {% set na_icon %}
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+             class="inline-block w-6 h-6 align-middle text-gray-400" aria-hidden="true">
+            <path fill="currentColor" d="M19 18a4 4 0 0 0 0-8c-.3 0-.6 0-.8.1A6 6 0 0 0 6 11H5a4 4 0 0 0 0 8h14Z"/>
+            <text x="12" y="15" text-anchor="middle" font-size="9" fill="white"
+                  font-family="ui-sans-serif,system-ui">?</text>
+        </svg>
+    {% endset %}
+
     <div class="relative min-h-screen bg-cover bg-center flex justify-center items-start">
         <div class="relative z-10 w-full max-w-6xl mx-auto px-6 py-8 flex flex-col
             bg-white/95 backdrop-blur rounded-2xl shadow-xl md:overflow-hidden md:max-h-[calc(90vh-6rem)] my-6">
@@ -68,11 +81,28 @@
                 {% for s in sorties %}
                     {% set inscrit = me ? s.participantInscrit.contains(me) : false %}
                     {% set lib = s.etat ? s.etat.libelle : null %}
+                    {% set m = meteo[s.id] ?? null %}
+                    {% set iconKey = (m and m.icon is defined) ? m.icon : null %}
+                    {% set tooltip = iconKey ? m.label : (m.na_reason ?? 'Prévision indisponible') %}
 
                     <div class="border border-gray-200 rounded-xl p-4 bg-white">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <div class="text-base font-semibold text-gray-900">{{ s.nom }}</div>
+                                <div class="mt-1 text-sm text-gray-600 flex items-center gap-2">
+                                    <span
+                                        class="inline-block align-middle cursor-default meteo-tip text-[22px] md:text-[24px] leading-none"
+                                        data-tooltip="{{ tooltip }}"
+                                        tabindex="0"
+                                        aria-label="{{ tooltip }}"
+                                    >
+                                        {% if iconKey and I[iconKey] is defined %}
+                                            {{ I[iconKey] }}
+                                        {% else %}
+                                            {{ na_icon|raw }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="mt-4 text-base font-semibold text-gray-900">{{ s.nom }}</div>
                                 <div class="mt-1 text-sm text-gray-600">
                                     {{ s.dateHeureDebut ? s.dateHeureDebut|date('d/m/Y H:i') : '—' }}
                                     · Clôture : {{ s.dateLimiteInscription ? s.dateLimiteInscription|date('d/m/Y') : '—' }}
@@ -114,6 +144,7 @@
                         <table class="min-w-full divide-y divide-gray-200 bg-white">
                             <thead class="bg-gray-50">
                             <tr class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                <th class="px-3 py-3 w-12 text-center">Météo</th>
                                 <th class="px-4 py-3">Nom</th>
                                 <th class="px-4 py-3">Date</th>
                                 <th class="px-4 py-3">Clôture</th>
@@ -128,7 +159,26 @@
                             {% for s in sorties %}
                                 {% set inscrit = me ? s.participantInscrit.contains(me) : false %}
                                 {% set lib = s.etat ? s.etat.libelle : null %}
+                                {% set m = meteo[s.id] ?? null %}
+                                {% set iconKey = m and m.icon is defined ? m.icon : null %}
+                                {% set tooltip = iconKey
+                                    ? (m.label ~ (m.tmin is defined ? ' • ' ~ m.tmin|number_format(0) ~ '–' ~ m.tmax|number_format(0) ~ '°C' : ''))
+                                    : (m.na_reason ?? 'Prévision indisponible') %}
                                 <tr class="hover:bg-gray-50">
+                                    <td class="px-3 py-3 text-center">
+                                        <span
+                                            class="inline-block align-middle cursor-default meteo-tip text-[22px] md:text-[24px] leading-none"
+                                            data-tooltip="{{ tooltip }}"
+                                            tabindex="0"
+                                            aria-label="{{ tooltip }}"
+                                        >
+                                            {% if iconKey and I[iconKey] is defined %}
+                                                {{ I[iconKey] }}
+                                            {% else %}
+                                                {{ na_icon|raw }}
+                                            {% endif %}
+                                        </span>
+                                    </td>
                                     <td class="px-4 py-3 font-medium text-gray-800">{{ s.nom }}</td>
                                     <td class="px-4 py-3 text-gray-700">{{ s.dateHeureDebut ? s.dateHeureDebut|date('d/m/Y H:i') : '' }}</td>
                                     <td class="px-4 py-3 text-gray-700">{{ s.dateLimiteInscription ? s.dateLimiteInscription|date('d/m/Y') : '' }}</td>
@@ -184,4 +234,86 @@
             </div>
         </div>
     </div>
+    <script>
+        (() => {
+            const tip = document.createElement('div');
+            tip.className = [
+                'fixed z-[9999] max-w-[22rem] px-3 py-1.5 rounded-md',
+                'bg-gray-900/95 text-white text-xs shadow-lg ring-1 ring-black/20',
+                'pointer-events-none select-none',
+                'opacity-0 transition-opacity duration-100'
+            ].join(' ');
+            const arrow = document.createElement('div');
+            arrow.className = 'absolute w-2 h-2 rotate-45 bg-gray-900/95';
+            tip.appendChild(arrow);
+            document.body.appendChild(tip);
+
+            let hideTimer;
+
+            function show(el, e) {
+                clearTimeout(hideTimer);
+                tip.textContent = el.getAttribute('data-tooltip') || '';
+                tip.appendChild(arrow); // remettre la flèche
+                tip.style.opacity = '1';
+
+                // Mesurer
+                const rect = el.getBoundingClientRect();
+                const gap = 10; // espace entre l’icône et le tooltip
+                tip.style.left = '0px'; tip.style.top = '0px'; // reset pour mesure
+                tip.style.display = 'block';
+                const tRect = tip.getBoundingClientRect();
+
+                // Position par défaut : au-dessus, centré
+                let top = rect.top - tRect.height - gap;
+                let left = rect.left + rect.width/2 - tRect.width/2;
+                // Ajustements pour rester dans le viewport
+                const vw = window.innerWidth, vh = window.innerHeight;
+                if (top < 8) top = rect.bottom + gap; // flip dessous si pas de place
+                if (left < 8) left = 8;
+                if (left + tRect.width > vw - 8) left = vw - 8 - tRect.width;
+
+                tip.style.transform = 'none';
+                tip.style.left = `${Math.round(left)}px`;
+                tip.style.top  = `${Math.round(top)}px`;
+
+                // Flèche
+                const aSize = 8;
+                arrow.style.width = arrow.style.height = aSize + 'px';
+                arrow.style.left = `${Math.round(rect.left + rect.width/2 - left - aSize/2)}px`;
+                if (top > rect.top) {
+                    // tooltip dessous => flèche en haut
+                    arrow.style.top = `-${aSize/2}px`;
+                } else {
+                    // tooltip dessus => flèche en bas
+                    arrow.style.top = `${tRect.height - aSize/2}px`;
+                }
+            }
+
+            function hide() {
+                hideTimer = setTimeout(() => {
+                    tip.style.opacity = '0';
+                    tip.style.display = 'none';
+                }, 80);
+            }
+
+            // Délégation d’événements (marche partout)
+            document.addEventListener('mouseover', (e) => {
+                const el = e.target.closest('.meteo-tip');
+                if (el) show(el, e);
+            });
+            document.addEventListener('focusin', (e) => {
+                const el = e.target.closest('.meteo-tip');
+                if (el) show(el, e);
+            });
+            document.addEventListener('mouseout', (e) => {
+                if (e.target.closest('.meteo-tip')) hide();
+            });
+            document.addEventListener('focusout', (e) => {
+                if (e.target.closest('.meteo-tip')) hide();
+            });
+            window.addEventListener('scroll', () => { tip.style.opacity = '0'; tip.style.display = 'none'; }, { passive:true });
+            window.addEventListener('resize', () => { tip.style.opacity = '0'; tip.style.display = 'none'; });
+        })();
+    </script>
 {% endblock %}
+
