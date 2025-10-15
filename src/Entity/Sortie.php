@@ -72,12 +72,6 @@ class Sortie
      * @var Collection<int, Note>
      */
     #[ORM\OneToMany(targetEntity: Note::class, mappedBy: 'sortie')]
-    private Collection $participant;
-
-    /**
-     * @var Collection<int, Note>
-     */
-    #[ORM\OneToMany(targetEntity: Note::class, mappedBy: 'sortie')]
     private Collection $note;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
@@ -86,7 +80,6 @@ class Sortie
     public function __construct()
     {
         $this->participantInscrit = new ArrayCollection();
-        $this->participant = new ArrayCollection();
         $this->note = new ArrayCollection();
     }
 
@@ -253,36 +246,6 @@ class Sortie
     public function setMotifAnnulation(?string $motifAnnulation): self
     {
         $this->motifAnnulation = $motifAnnulation;
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Note>
-     */
-    public function getParticipant(): Collection
-    {
-        return $this->participant;
-    }
-
-    public function addParticipant(Note $participant): static
-    {
-        if (!$this->participant->contains($participant)) {
-            $this->participant->add($participant);
-            $participant->setSortie($this);
-        }
-
-        return $this;
-    }
-
-    public function removeParticipant(Note $participant): static
-    {
-        if ($this->participant->removeElement($participant)) {
-            // set the owning side to null (unless already changed)
-            if ($participant->getSortie() === $this) {
-                $participant->setSortie(null);
-            }
-        }
-
         return $this;
     }
 
