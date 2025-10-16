@@ -26,7 +26,7 @@ class SortieStateResolver
         $etatAnnulee   = $this->getEtat('Annulée');
         $etatOuverte   = $this->getEtat('Ouverte');
         $etatCloturee  = $this->getEtat('Clôturée');
-        $etatEnCours   = $this->getEtat('Activité en cours');
+        $etatEnCours   = $this->getEtat('En cours');
         $etatPassee    = $this->getEtat('Passée');
         $etatCreee     = $this->getEtat('Créée');
 
