@@ -116,7 +116,7 @@ symfony console messenger:consume async --sleep=1
 
 Préparation
 - Assure-toi d’avoir les états suivants en BDD (libellés exacts ou variantes de casse):
-  - `Créée`, `Ouverte`, `Clôturée`, `Activité en cours`, `Passée`, `Annulée`.
+  - `Créée`, `Ouverte`, `Clôturée`, `En cours`, `Passée`, `Annulée`.
 - Vérifie que les sorties de test ont des `dateLimiteInscription`, `dateHeureDebut`, `duree`, `nbInscriptionsMax` cohérents.
 
 Scénarios
