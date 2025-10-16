@@ -425,7 +425,6 @@ class SortieController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            // 👇 même logique que ParticipantController
             if ($request->request->get('delete_photo') === '1') {
                 $sortie->setPhotoFile(null);
                 $sortie->setPhoto(null);
