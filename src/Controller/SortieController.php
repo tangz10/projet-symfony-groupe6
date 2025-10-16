@@ -20,7 +20,7 @@ use App\Message\RefreshOneSortieStateMessage;
 use App\Service\MeteoService;
 
 #[Route('/sortie')]
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[IsGranted('IS_AUTHENTICATED_FULLY')] // restauration: le contrôleur nécessite une authentification complète
 class SortieController extends AbstractController
 {
     #[Route(name: 'app_sortie_index', methods: ['GET'])]
@@ -143,6 +143,8 @@ class SortieController extends AbstractController
             }
         }
 
+        // Initialisation par défaut pour éviter une variable non définie
+        $meteoNow = null;
         if ($sortie->getLieu()?->getLatitude() !== null
             && $sortie->getLieu()?->getLongitude() !== null
             && $sortie->getDateHeureDebut() instanceof \DateTimeInterface) {
@@ -164,7 +166,7 @@ class SortieController extends AbstractController
     }
 
     #[Route('/{id}/annuler', name: 'app_sortie_annuler', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_USER')] // restauration: accès réservé aux utilisateurs connectés
     public function annuler(
         Sortie $sortie,
         Request $request,
@@ -172,6 +174,13 @@ class SortieController extends AbstractController
         EntityManagerInterface $em,
         MessageBusInterface $bus
     ) {
+        // Vérification via voter: si refus → message + retour show (pas de 403 ici pour conserver l'UX)
+        if (!$this->isGranted('SORTIE_CANCEL', $sortie)) {
+            $this->addFlash('error', "Seul l'organisateur de la sortie ou un administrateur peut annuler une sortie.");
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        // CSRF obligatoire (POST uniquement)
         if (!$this->isCsrfTokenValid('cancel'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
@@ -270,17 +279,19 @@ class SortieController extends AbstractController
         EtatRepository $etatRepo,
         MessageBusInterface $bus
     ): Response {
+        // Décision via voter (peut rester pour robustesse, mais l'anonyme ne rentre plus ici)
+        if (!$this->isGranted('SORTIE_REGISTER', $sortie)) {
+            $this->addFlash('error', "Il faut être connecté en tant que participant pour s'inscrire à une sortie.");
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        // CSRF (POST uniquement)
         if (!$this->isCsrfTokenValid('inscrire'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
         $user = $this->getUser();
-
-        if (!$user instanceof \App\Entity\Participant) {
-            throw $this->createAccessDeniedException('Utilisateur non valide.');
-        }
-
         $participantId = $user->getId();
 
         if (!$sortie->getEtat() || strtolower(trim($sortie->getEtat()->getLibelle())) !== 'ouverte') {
@@ -330,13 +341,11 @@ class SortieController extends AbstractController
                 $etatCloturee = $etatRepo->findOneBy(['libelle' => 'Clôturée']);
                 if ($etatCloturee) {
                     $sortie->setEtat($etatCloturee);
-                    $em->flush(); // persiste le changement d’état
+                    $em->flush();
                 }
             }
 
             $this->addFlash('success', 'Inscription réussie !');
-
-            // Recalcul asynchrone (peut rouvrir/fermer selon règles)
             $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
         } catch (\Exception $e) {
             $this->addFlash('error', 'Erreur lors de l\'inscription : ' . $e->getMessage());
@@ -359,11 +368,10 @@ class SortieController extends AbstractController
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
-        $user = $this->getUser();
+        // Voter: exige un Participant connecté pour se désister
+        $this->denyAccessUnlessGranted('SORTIE_UNREGISTER', $sortie);
 
-        if (!$user instanceof \App\Entity\Participant) {
-            throw $this->createAccessDeniedException('Utilisateur non valide.');
-        }
+        $user = $this->getUser();
 
         $participant = $em->getRepository(\App\Entity\Participant::class)->find($user->getId());
 
@@ -427,10 +435,18 @@ class SortieController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function edit(Sortie $sortie, Request $request, EntityManagerInterface $em): Response
     {
-        $me = $this->getUser();
+        // Voter en premier: si refus → message + retour show
+        if (!$this->isGranted('SORTIE_EDIT', $sortie)) {
+            $this->addFlash('error', "Seul l'organisateur de la sortie ou un administrateur peux éditer une sortie");
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
 
-        if (!$sortie->getParticipantOrganisateur() || $sortie->getParticipantOrganisateur()->getId() !== $me->getId()) {
-            $this->addFlash('error', 'Vous ne pouvez pas modifier cette sortie.');
+        $me = $this->getUser();
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+        $isOrganisateur = $sortie->getParticipantOrganisateur() && $sortie->getParticipantOrganisateur()->getId() === $me->getId();
+
+        if (!($isOrganisateur || $isAdmin)) {
+            $this->addFlash('error', "Seul l'organisateur de la sortie ou un administrateur peux éditer une sortie");
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 

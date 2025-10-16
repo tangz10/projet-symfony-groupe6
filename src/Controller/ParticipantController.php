@@ -54,12 +54,8 @@ final class ParticipantController extends AbstractController
     #[Route('/{id}', name: 'app_participant_show', methods: ['GET'])]
     public function show(Participant $participant): Response
     {
-
-        $user = $this->getUser();
-
-        if (!$this->isGranted('ROLE_ADMIN') && (!$user || $user->getId() !== $participant->getId())) {
-            throw $this->createAccessDeniedException('Accès refusé');
-        }
+        // Voter: Admin ou soi-même
+        $this->denyAccessUnlessGranted('PARTICIPANT_VIEW', $participant);
 
         return $this->render('participant/show.html.twig', [
             'participant' => $participant,
@@ -69,12 +65,8 @@ final class ParticipantController extends AbstractController
     #[Route('/{id}/edit', name: 'app_participant_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Participant $participant, EntityManagerInterface $entityManager): Response
     {
-
-        $user = $this->getUser();
-
-        if (!$this->isGranted('ROLE_ADMIN') && (!$user || $user->getId() !== $participant->getId())) {
-            throw $this->createAccessDeniedException('Accès refusé');
-        }
+        // Voter: Admin ou soi-même
+        $this->denyAccessUnlessGranted('PARTICIPANT_EDIT', $participant);
 
         $form = $this->createForm(ParticipantType::class, $participant);
         $form->handleRequest($request);
@@ -141,6 +133,9 @@ final class ParticipantController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function delete(Request $request, Participant $participant, EntityManagerInterface $entityManager): Response
     {
+        // Voter: Admin uniquement (cohérence centrale)
+        $this->denyAccessUnlessGranted('PARTICIPANT_DELETE', $participant);
+
         if ($this->isCsrfTokenValid('delete'.$participant->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($participant);
             $entityManager->flush();

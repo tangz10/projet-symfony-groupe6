@@ -49,6 +49,7 @@
                         {% set eventTs = s.dateHeureDebut ? s.dateHeureDebut|date('U') : null %}
                         {% set nowTs   = "now"|date('U') %}
                         {% set daysAhead = (eventTs and nowTs) ? ((eventTs - nowTs) / 86400) : null %}
+                        {% set canTryRegister = isOuverte and not afterClosure and not isEnCours and not isCloturee and not isAnnulee and not isComplet and beforeStart and not inscrit %}
 
                         <div class="-mx-6 -mt-8 px-6 py-6 md:-mx-8 md:px-8 md:py-7 bg-gradient-to-r from-purple-600 to-purple-700 text-white relative overflow-hidden rounded-t-2xl">
 
@@ -262,7 +263,7 @@
                             {% set isOuverte = s.etat and (s.etat.libelle|trim|lower == 'ouverte') %}
                             <div class="mt-6 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                                 {% if me and not isOrganisateur %}
-                                    {% if isOuverte and not afterClosure and not isEnCours and not isCloturee and not isAnnulee and not inscrit and not isComplet and not isPassee %}
+                                    {% if canTryRegister %}
                                         <form method="post" action="{{ path('app_sortie_inscrire', {id: s.id}) }}" class="w-full sm:w-auto" style="display:inline;">
                                             <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ s.id) }}">
                                             <button type="submit" class="w-full h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
