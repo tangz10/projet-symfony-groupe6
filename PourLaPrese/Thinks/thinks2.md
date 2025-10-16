@@ -177,4 +177,178 @@ REGISTER = Participant connecté OK
 CANCEL = Organisateur OU Admin OK
 UNREGISTER = Participant connecté OK
 
-VOTERS SORTIE OK 
+VOTERS SORTIE OK
+
+---
+
+## [NOUVEAU] ParticipantVoter — sécurisation des profils
+
+Ajout d’un voter dédié aux actions sur l’entité `Participant`, pour centraliser les règles « Admin ou soi-même » et éviter la duplication dans les contrôleurs et les templates.
+
+Règles (dans `src/Security/Voter/ParticipantVoter.php`)
+- `PARTICIPANT_VIEW`: Admin ou soi-même.
+- `PARTICIPANT_EDIT`: Admin ou soi-même.
+- `PARTICIPANT_CHANGE_PASSWORD`: Admin ou soi-même.
+- `PARTICIPANT_DELETE`: Admin uniquement.
+
+Intégration (contrôleur)
+- `src/Controller/ParticipantController.php`:
+  - `show()`: `$this->denyAccessUnlessGranted('PARTICIPANT_VIEW', $participant);`
+  - `edit()`: `$this->denyAccessUnlessGranted('PARTICIPANT_EDIT', $participant);`
+  - `delete()`: garde `#[IsGranted('ROLE_ADMIN')]` + `$this->denyAccessUnlessGranted('PARTICIPANT_DELETE', $participant);`
+  - La garde de classe `#[IsGranted('IS_AUTHENTICATED_FULLY')]` reste active (pas d’accès anonyme au contrôleur).
+
+Intégration (Twig)
+- `templates/participant/show.html.twig`:
+  - Affichage conditionnel des CTA:
+    - Modifier → `is_granted('PARTICIPANT_EDIT', participant)`
+    - Supprimer → `is_granted('PARTICIPANT_DELETE', participant)`
+
+Notes
+- Aucun assouplissement temporaire ici: c’est un durcissement/centralisation.
+- Si retour arrière nécessaire: retirer les appels `denyAccessUnlessGranted(...)` et rétablir les `if (ROLE_ADMIN || self)` dans le contrôleur; retirer les conditions `is_granted(...)` dans Twig.
+
+Procédure de test
+1) Anonyme: accès à toute route `/participant/...` → redirection login (garde de classe).
+2) Utilisateur standard (non admin):
+   - Accéder à son propre profil `/participant/{id}` → OK, bouton « Modifier » visible, pas de « Supprimer ».
+   - Accéder au profil d’un autre utilisateur → 403.
+   - Accéder à `/participant/{id}/edit` pour un autre utilisateur → 403.
+3) Admin:
+   - Accès à l’index `/participant` → OK (liste), création, édition et suppression autorisées.
+   - Sur `show`, boutons « Modifier » et « Supprimer » visibles pour tous les profils.
+
+Appliqué le: 2025-10-16
+
+---
+
+## [FIX] CSRF login — retour au token basé session
+
+Problème: Erreur « Invalid CSRF token » sur /login.
+Constat: `config/packages/csrf.yaml` listait `authenticate` dans `framework.csrf_protection.stateless_token_ids`, ce qui force un jeton CSRF « stateless » pour l’authentification. Dans notre configuration (form_login avec session), ce mode est fragile et peut invalider le jeton.
+
+Changement appliqué (2025-10-16):
+- Retrait de `authenticate` de `stateless_token_ids`. Le jeton CSRF de login redevient « session-based ».
+
+Fichiers:
+- `config/packages/csrf.yaml`:
+  - Avant:
+    - stateless_token_ids: [submit, authenticate, logout]
+  - Après:
+    - stateless_token_ids: [submit, logout]
+
+Impact:
+- Le formulaire de login `<input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">` reste inchangé.
+- La validation CSRF du `form_login` (security.yaml, enable_csrf: true) utilise à nouveau la session, attendu par défaut.
+
+Procédure de test:
+- Rafraîchir /login et réessayer la connexion.
+- Si besoin: vider le cache du navigateur pour 127.0.0.1:8000 ou supprimer les cookies de la session locale.
+- Optionnel: `php bin/console cache:clear`.
+
+Rollback (si on veut revenir au mode stateless plus tard):
+- Réintroduire `authenticate` dans `stateless_token_ids` et vérifier que les cookies/session et le domaine/HTTPS sont configurés en conséquence.
+
+---
+
+## [NOUVEAU] AccessDeniedSubscriber — messages personnalisés et redirection
+
+Objectif: Remplacer la page Symfony « Access Denied » par des messages explicites et des redirections UX-friendly, sans affaiblir la sécurité.
+
+Implémentation
+- Fichier: `src/EventListener/AccessDeniedSubscriber.php`
+- Mécanisme: intercepte `AccessDeniedException` (issues de `denyAccessUnlessGranted`/`#[IsGranted]`) et:
+  - Ajoute un flash message explicite.
+  - Redirige l’utilisateur vers une page appropriée.
+
+Règles par contexte (route)
+- Utilisateur non authentifié:
+  - Message: « Veuillez vous connecter pour accéder à cette page. »
+  - Redirection: `app_login`.
+- Participant (`app_participant_*`):
+  - Message: « Vous ne pouvez pas consulter le profil d'un autre membre. »
+  - Redirection: sur son propre profil `app_participant_show` (id = user.id).
+- Sortie (`app_sortie_*`):
+  - `app_sortie_edit`: « Seul l'organisateur de la sortie ou un administrateur peut éditer une sortie. »
+  - `app_sortie_annuler`: « Seul l'organisateur de la sortie ou un administrateur peut annuler une sortie. »
+  - `app_sortie_publier`: « Seul l'organisateur de la sortie peut publier cette sortie. »
+  - `app_sortie_inscrire`: « Il faut être connecté en tant que participant pour s'inscrire à une sortie. »
+  - `app_sortie_desister`: « Il faut être connecté en tant que participant pour se désister d'une sortie. »
+  - Redirection: vers `app_sortie_show` si `id` présent, sinon `app_sortie_index`.
+- Admin-only (site/ville/lieu — `app_site_*`, `app_ville_*`, `app_lieu_*`):
+  - Message: « Cette section est réservée aux administrateurs. »
+  - Redirection: `app_index`.
+- Par défaut:
+  - Message générique: « Vous n'avez pas l'autorisation requise pour effectuer cette action. »
+  - Redirection: `app_index`.
+
+Notes
+- Les contrôleurs qui gèrent déjà un « refus doux » (flash + redirect explicite) conservent leur logique (aucune exception donc le subscriber ne s’active pas). Pour les autres cas, le subscriber garantit une UX homogène.
+- Sécurité: inchangée. On ne détourne que l’affichage/UX des refus, pas les décisions d’accès (toujours prises par les voters/attributs).
+
+Procédure de test
+1) Profil d’autrui (utilisateur non admin):
+   - URL: `/participant/{autre_id}` → flash « Vous ne pouvez pas consulter le profil d'un autre membre. » + redirection vers `/participant/{mon_id}`.
+2) Sortie (non organisateur ni admin):
+   - URL: `/sortie/{id}/edit` → message adéquat + retour page de la sortie.
+   - URL: `/sortie/{id}/annuler` (POST sans droit) → message adéquat + retour page de la sortie.
+3) Admin-only (ex: `/site/new`) en non-admin:
+   - Message « Cette section est réservée aux administrateurs. » + redirection accueil.
+4) Anonyme vers page protégée (ex: `/participant/{id}`):
+   - Message « Veuillez vous connecter… » + redirection /login.
+
+Rollback
+- Supprimer le fichier `src/EventListener/AccessDeniedSubscriber.php` (ou commenter `getSubscribedEvents`) rétablit la page Access Denied par défaut.
+
+Appliqué le: 2025-10-16
+
+---
+
+## [NOUVEAU] NoteVoter — sécurisation de la notation des sorties
+
+Objectif: Centraliser la décision d’accès pour la notation d’une sortie sans modifier l’UX ni les messages existants.
+
+Règles (dans `src/Security/Voter/NoteVoter.php`)
+- `NOTE_RATE` (sujet: `Sortie`): autorisé si l’utilisateur courant est un `Participant` connecté.
+- Les règles métier fines (sortie « Passée », être inscrit, borne de la note) restent dans le contrôleur pour conserver les messages flash d’origine.
+
+Intégration (contrôleur)
+- `src/Controller/NoteController.php`:
+  - `noter()`:
+    - Ajout: `$this->denyAccessUnlessGranted('NOTE_RATE', $sortie);`
+    - Messages conservés et inchangés:
+      - `Token CSRF invalide.`
+      - `Vous pourrez noter une fois la sortie terminée.`
+      - `Seuls les participants inscrits peuvent noter.`
+      - `La note doit être entre 1 et 5.`
+      - `Merci pour votre note !`
+    - Correction: test d’état de la sortie corrigé de `if (!$etat == 'Passée')` vers `if ($etat !== 'Passée')`.
+
+Templates
+- `templates/sortie/show.html.twig`:
+  - Pas de changement UX: le formulaire s’affiche selon la variable existante `peutNoter` comme avant. Le voter agit côté contrôleur uniquement.
+
+Procédure de test
+1) Utilisateur standard (inscrit à une sortie « Passée »):
+   - Soumettre une note → `Merci pour votre note !` et persistance OK.
+2) Utilisateur standard (inscrit mais sortie non « Passée »):
+   - Soumettre → `Vous pourrez noter une fois la sortie terminée.`
+3) Utilisateur standard (non inscrit):
+   - Soumettre → `Seuls les participants inscrits peuvent noter.`
+4) Note hors bornes (ex: 0 ou 6):
+   - Soumettre → `La note doit être entre 1 et 5.`
+5) CSRF invalide:
+   - Soumettre avec token erroné → `Token CSRF invalide.`
+
+---
+
+### [MÀJ] Méthodologie unifiée (Participant/Note)
+
+- `NoteController::noter()` utilise désormais `denyAccessUnlessGranted('NOTE_RATE', $sortie)` (hard deny), comme pour `ParticipantController`.
+- Les messages de refus pour la route `app_sortie_noter` sont gérés par `AccessDeniedSubscriber` afin de conserver exactement les messages d’origine:
+  - Sortie non terminée → « Vous pourrez noter une fois la sortie terminée. »
+  - Non inscrit → « Seuls les participants inscrits peuvent noter. »
+- Redirection: vers la page de la sortie (`app_sortie_show`).
+- Le `NoteVoter` concentre la règle d’accès (Participant connecté + Sortie Passée/Terminée + inscrit).
+
+Appliqué le: 2025-10-16

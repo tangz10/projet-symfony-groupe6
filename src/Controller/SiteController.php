@@ -5,20 +5,21 @@ namespace App\Controller;
 use App\Entity\Site;
 use App\Form\SiteType;
 use App\Repository\SiteRepository;
+use App\Security\Voter\SiteVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/site')]
-#[IsGranted('ROLE_ADMIN')]
 final class SiteController extends AbstractController
 {
     #[Route(name: 'app_site_index', methods: ['GET'])]
     public function index(SiteRepository $siteRepository): Response
     {
+        $this->denyAccessUnlessGranted(SiteVoter::LIST);
+
         return $this->render('site/index.html.twig', [
             'sites' => $siteRepository->findAll(),
         ]);
@@ -28,6 +29,8 @@ final class SiteController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $site = new Site();
+        $this->denyAccessUnlessGranted(SiteVoter::CREATE, $site);
+
         $form = $this->createForm(SiteType::class, $site);
         $form->handleRequest($request);
 
@@ -47,6 +50,8 @@ final class SiteController extends AbstractController
     #[Route('/{id}', name: 'app_site_show', methods: ['GET'])]
     public function show(Site $site): Response
     {
+        $this->denyAccessUnlessGranted(SiteVoter::VIEW, $site);
+
         return $this->render('site/show.html.twig', [
             'site' => $site,
         ]);
@@ -55,6 +60,8 @@ final class SiteController extends AbstractController
     #[Route('/{id}/edit', name: 'app_site_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Site $site, EntityManagerInterface $entityManager): Response
     {
+        $this->denyAccessUnlessGranted(SiteVoter::EDIT, $site);
+
         $form = $this->createForm(SiteType::class, $site);
         $form->handleRequest($request);
 
@@ -73,6 +80,8 @@ final class SiteController extends AbstractController
     #[Route('/{id}', name: 'app_site_delete', methods: ['POST'])]
     public function delete(Request $request, Site $site, EntityManagerInterface $entityManager): Response
     {
+        $this->denyAccessUnlessGranted(SiteVoter::DELETE, $site);
+
         if ($this->isCsrfTokenValid('delete'.$site->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($site);
             $entityManager->flush();
