@@ -15,13 +15,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
+use App\Message\RefreshOneSortieStateMessage;
+use App\Service\MeteoService;
 
 #[Route('/sortie')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class SortieController extends AbstractController
 {
     #[Route(name: 'app_sortie_index', methods: ['GET'])]
-    public function index(Request $request, SortieRepository $repo): Response
+    public function index(Request $request, SortieRepository $repo, MeteoService $meteo): Response
     {
         $form = $this->createForm(SortieFilterType::class);
         $form->handleRequest($request);
@@ -31,10 +34,49 @@ class SortieController extends AbstractController
 
         $sorties = $repo->findForListing($filters, $user);
 
+        $meteos = [];
+        foreach ($sorties as $s) {
+            $d = $s->getDateHeureDebut();
+            $lieu = $s->getLieu();
+
+            $reason = null;
+            if (!$d) {
+                $reason = 'Date de sortie inconnue';
+            } elseif (!$lieu) {
+                $reason = 'Lieu de la sortie inconnu';
+            } elseif ($lieu->getLatitude() === null || $lieu->getLongitude() === null) {
+                $reason = 'Coordonnées du lieu manquantes';
+            } else {
+                $dt = \DateTimeImmutable::createFromMutable($d);
+                $fc = $meteo->getDailyForecast($dt, (float)$lieu->getLatitude(), (float)$lieu->getLongitude());
+
+                if ($fc) {
+                    $meteos[$s->getId()] = $fc;
+                    continue;
+                }
+
+                $today0 = new \DateTimeImmutable('today');
+                $days = (int)$today0->diff($dt->setTime(0,0))->format('%r%a');
+
+                if ($days > 15) {
+                    $reason = 'Date trop lointaine (prévision au-delà de 16 jours)';
+                } elseif ($days < -60) {
+                    $reason = 'Historique indisponible pour cette date';
+                } else {
+                    $reason = 'Aucune donnée météo fournie par l’API pour cette date';
+                }
+            }
+
+            if ($reason) {
+                $meteos[$s->getId()] = ['na_reason' => $reason];
+            }
+        }
+
         return $this->render('sortie/index.html.twig', [
-            'form' => $form->createView(),
+            'form'    => $form->createView(),
             'sorties' => $sorties,
-            'me' => $user,
+            'me'      => $user,
+            'meteo'  => $meteos,
         ]);
     }
 
@@ -63,6 +105,7 @@ class SortieController extends AbstractController
 
         return $this->render('sortie/new.html.twig', [
             'form' => $form->createView(),
+            's'    => $sortie,
         ], new Response(status: $status));
     }
 
@@ -70,7 +113,8 @@ class SortieController extends AbstractController
     public function show(
         Sortie $sortie,
         EtatRepository $etatRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MeteoService $meteo
     ): Response {
         $now = new \DateTimeImmutable();
 
@@ -99,11 +143,23 @@ class SortieController extends AbstractController
             }
         }
 
+        if ($sortie->getLieu()?->getLatitude() !== null
+            && $sortie->getLieu()?->getLongitude() !== null
+            && $sortie->getDateHeureDebut() instanceof \DateTimeInterface) {
+
+            $meteoNow = $meteo->getDailyForecast(
+                $sortie->getDateHeureDebut(),
+                (float)$sortie->getLieu()->getLatitude(),
+                (float)$sortie->getLieu()->getLongitude()
+            );
+        }
+
         return $this->render('sortie/show.html.twig', [
             's'  => $sortie,
             'me' => $this->getUser(),
             'avgNote' => $moy,
             'myNote' => $maNote,
+            'meteo' => $meteoNow,
         ]);
     }
 
@@ -113,7 +169,8 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EtatRepository $etatRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MessageBusInterface $bus
     ) {
         if (!$this->isCsrfTokenValid('cancel'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
@@ -157,6 +214,9 @@ class SortieController extends AbstractController
 
         $em->flush();
 
+        // Rafraîchissement asynchrone de l'état
+        $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
+
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
 
@@ -166,7 +226,8 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EtatRepository $etatRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MessageBusInterface $bus
     ) {
         if (!$this->isCsrfTokenValid('publish'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
@@ -193,6 +254,9 @@ class SortieController extends AbstractController
         $sortie->setEtat($etatOuverte);
         $em->flush();
 
+        // Tick de recalcul
+        $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
+
         $this->addFlash('success', 'La sortie a été publiée (ouverte aux inscriptions).');
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
@@ -203,7 +267,8 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EntityManagerInterface $em,
-        EtatRepository $etatRepo
+        EtatRepository $etatRepo,
+        MessageBusInterface $bus
     ): Response {
         if (!$this->isCsrfTokenValid('inscrire'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
@@ -270,6 +335,9 @@ class SortieController extends AbstractController
             }
 
             $this->addFlash('success', 'Inscription réussie !');
+
+            // Recalcul asynchrone (peut rouvrir/fermer selon règles)
+            $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
         } catch (\Exception $e) {
             $this->addFlash('error', 'Erreur lors de l\'inscription : ' . $e->getMessage());
         }
@@ -283,7 +351,8 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EntityManagerInterface $em,
-        EtatRepository $etatRepo
+        EtatRepository $etatRepo,
+        MessageBusInterface $bus
     ): Response {
         if (!$this->isCsrfTokenValid('desister'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
@@ -347,6 +416,10 @@ class SortieController extends AbstractController
         }
 
         $this->addFlash('success', 'Vous vous êtes désisté de cette sortie.');
+
+        // Recalcul asynchrone après désistement
+        $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
+
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
 
@@ -370,6 +443,12 @@ class SortieController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            if ($request->request->get('delete_photo') === '1') {
+                $sortie->setPhotoFile(null);
+                $sortie->setPhoto(null);
+            }
+
             $em->flush();
             $this->addFlash('success', 'Sortie mise à jour.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
@@ -381,5 +460,4 @@ class SortieController extends AbstractController
             'me'   => $me,
         ]);
     }
-
 }

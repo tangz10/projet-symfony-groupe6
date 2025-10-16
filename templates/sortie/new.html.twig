@@ -1,114 +1,150 @@
+{# templates/sortie/new.html.twig #}
 {% extends 'base.html.twig' %}
 
 {% block title %}Créer une sortie{% endblock %}
 
 {% block body %}
-    <div class="relative h-screen overflow-hidden flex items-center justify-center bg-center bg-no-repeat bg-cover">
+    <div class="relative min-h-screen flex items-start justify-center bg-gradient-to-br from-gray-50 to-white bg-white/95">
+        <div class="w-full max-w-3xl mt-10 mb-6 mx-4">
+            <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl overflow-hidden">
 
-        <div class="z-10 w-full max-w-3xl">
-            <div class="mx-4 sm:mx-auto bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 sm:p-8">
-                <div class="flex items-center justify-between mb-6">
-                    <h1 class="text-2xl sm:text-3xl font-semibold text-gray-800">Créer une sortie</h1>
-                    <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                      Nouveau
-                    </span>
-                </div>
+                <div class="relative px-6 md:px-8 py-6 md:py-7 bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                    <div class="pointer-events-none absolute -top-10 -right-10 w-64 h-64 rounded-full bg-white/10"></div>
+                    <div class="pointer-events-none absolute -bottom-16 -left-16 w-40 h-40 rounded-full bg-white/10"></div>
 
-                {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
-
-                <div>
-                    {{ form_label(form.nom, 'Nom de la sortie *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-                    {{ form_widget(form.nom, {'attr': {
-                        'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600'
-                    }}) }}
-                    {{ form_errors(form.nom) }}
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        {{ form_label(form.dateHeureDebut, 'Date de début *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-                        {{ form_widget(form.dateHeureDebut, {'attr': {
-                            'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600'
-                        }}) }}
-                        {{ form_errors(form.dateHeureDebut) }}
-                    </div>
-                    <div>
-                        {{ form_label(form.dateLimiteInscription, "Date limite d'inscription *", {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-                        {{ form_widget(form.dateLimiteInscription, {'attr': {
-                            'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600'
-                        }}) }}
-                        {{ form_errors(form.dateLimiteInscription) }}
+                    <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-2xl md:text-3xl font-semibold">Créer une sortie</h1>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm">
+                                Nouveau
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        {{ form_label(form.duree, 'Durée (minutes) *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-                        {{ form_widget(form.duree, {'attr': {
-                            'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600',
-                            'min': 0
-                        }}) }}
-                        {{ form_errors(form.duree) }}
+                <div class="p-6 md:p-8">
+                    {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            {{ form_label(form.nom, 'Nom de la sortie *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {{ form_widget(form.nom, {'attr': {
+                                'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600'
+                            }}) }}
+                            {{ form_errors(form.nom) }}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-6">
+                                <div class="flex-shrink-0">
+                                    {% if s.photo %}
+                                        <img src="{{ asset('images/sorties/' ~ s.photo) }}"
+                                             alt="Photo de la sortie"
+                                             class="h-16 w-16 rounded-xl object-cover border-2 border-purple-100 shadow-sm">
+                                    {% else %}
+                                        <div class="h-16 w-16 rounded-xl bg-purple-100 flex items-center justify-center">
+                                            <svg class="h-7 w-7 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V8l-4-5H4z"/>
+                                            </svg>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-1">
+                                    {{ form_label(form.photoFile, 'Photo de la sortie', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+                                    {{ form_widget(form.photoFile, {'attr': {
+                                        'class': 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer'
+                                    }}) }}
+                                    {{ form_errors(form.photoFile) }}
+                                    <p class="mt-1 text-xs text-gray-500">JPG, PNG ou GIF (max. 2 Mo)</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        {{ form_label(form.nbInscriptionsMax, "Places max. *", {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-                        {{ form_widget(form.nbInscriptionsMax, {'attr': {
-                            'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600',
-                            'min': 1
-                        }}) }}
-                        {{ form_errors(form.nbInscriptionsMax) }}
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            {{ form_label(form.dateHeureDebut, 'Date de début *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {{ form_widget(form.dateHeureDebut, {'attr': {
+                                'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600'
+                            }}) }}
+                            {{ form_errors(form.dateHeureDebut) }}
+                        </div>
+                        <div>
+                            {{ form_label(form.dateLimiteInscription, "Date limite d'inscription *", {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {{ form_widget(form.dateLimiteInscription, {'attr': {
+                                'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600'
+                            }}) }}
+                            {{ form_errors(form.dateLimiteInscription) }}
+                        </div>
                     </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            {{ form_label(form.duree, 'Durée (minutes) *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {{ form_widget(form.duree, {'attr': {
+                                'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600',
+                                'min': 0
+                            }}) }}
+                            {{ form_errors(form.duree) }}
+                        </div>
+                        <div>
+                            {{ form_label(form.nbInscriptionsMax, "Places max. *", {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {{ form_widget(form.nbInscriptionsMax, {'attr': {
+                                'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600',
+                                'min': 1
+                            }}) }}
+                            {{ form_errors(form.nbInscriptionsMax) }}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            {{ form_label(form.site, 'Site organisateur *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {{ form_widget(form.site, {'attr': {
+                                'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600'
+                            }}) }}
+                            {{ form_errors(form.site) }}
+                        </div>
+                        <div>
+                            {{ form_label(form.lieu, 'Lieu *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {{ form_widget(form.lieu, {'attr': {
+                                'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600'
+                            }}) }}
+                            {{ form_errors(form.lieu) }}
+                        </div>
+                    </div>
+
+                    {% if form.etat is defined %}
+                        <div>
+                            {{ form_label(form.etat, 'État *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {{ form_widget(form.etat, {'attr': {
+                                'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600',
+                                'placeholder': 'Créée / Ouverte / ...'
+                            }}) }}
+                            {{ form_errors(form.etat) }}
+                        </div>
+                    {% endif %}
+
+                    <div>
+                        {{ form_label(form.infosSortie, 'Informations complémentaires', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {{ form_widget(form.infosSortie, {'attr': {
+                            'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 min-h-32 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600',
+                            'rows': 4
+                        }}) }}
+                        {{ form_errors(form.infosSortie) }}
+                    </div>
+
+                    <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+                        <button type="submit"
+                                class="h-11 px-6 flex items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-800 shadow">
+                            Enregistrer
+                        </button>
+                        <a href="{{ path('app_sortie_index') }}"
+                           class="h-11 px-6 flex items-center justify-center rounded-full border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 shadow-sm">
+                            Annuler
+                        </a>
+                    </div>
+
+                    {{ form_end(form) }}
                 </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        {{ form_label(form.site, 'Site organisateur *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-                        {{ form_widget(form.site, {'attr': {
-                            'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600'
-                        }}) }}
-                        {{ form_errors(form.site) }}
-                    </div>
-                    <div>
-                        {{ form_label(form.lieu, 'Lieu *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-                        {{ form_widget(form.lieu, {'attr': {
-                            'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600'
-                        }}) }}
-                        {{ form_errors(form.lieu) }}
-                    </div>
-                </div>
-
-                {% if form.etat is defined %}
-                    <div>
-                        {{ form_label(form.etat, 'État *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-                        {{ form_widget(form.etat, {'attr': {
-                            'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 h-11 px-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600',
-                            'placeholder': 'Créée / Ouverte / ...'
-                        }}) }}
-                        {{ form_errors(form.etat) }}
-                    </div>
-                {% endif %}
-
-                <div>
-                    {{ form_label(form.infosSortie, 'Informations complémentaires', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-                    {{ form_widget(form.infosSortie, {'attr': {
-                        'class': 'block w-full rounded-lg border border-gray-300 bg-gray-50 min-h-32 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600',
-                        'rows': 4
-                    }}) }}
-                    {{ form_errors(form.infosSortie) }}
-                </div>
-
-                <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-2">
-                    <a href="{{ path('app_sortie_index') }}"
-                       class="inline-flex justify-center items-center h-11 px-5 rounded-full border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 shadow-sm">
-                        Annuler
-                    </a>
-                    <button type="submit"
-                            class="inline-flex justify-center items-center h-11 px-6 rounded-full bg-purple-700 text-white font-medium hover:bg-purple-700 shadow">
-                        Enregistrer
-                    </button>
-                </div>
-
-                {{ form_end(form) }}
             </div>
         </div>
     </div>

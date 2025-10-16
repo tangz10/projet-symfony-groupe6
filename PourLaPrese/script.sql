@@ -1,5 +1,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
+DELETE FROM note;
 DELETE FROM sortie_participant;
 DELETE FROM sortie;
 DELETE FROM participant;
@@ -138,3 +139,36 @@ INSERT INTO sortie (id, site_id, etat_id, participant_organisateur_id, lieu_id, 
                                                                                                                                                                                         (31, 2, 5, 2, 3, 'Matinée Course d''Orientation', '2025-05-20 10:00:00', 180, '2025-05-18 23:59:59', 25, 'Course d''orientation en équipes', 0),
                                                                                                                                                                                         (32, 5, 5, 6, 5, 'Atelier Photo Urbain', '2025-04-10 14:00:00', 240, '2025-04-08 23:59:59', 15, 'Atelier découverte photo en ville', 0),
                                                                                                                                                                                         (33, 7, 5, 7, 7, 'Tournoi Pétanque Estival', '2025-07-03 20:00:00', 180, '2025-07-01 23:59:59', 16, 'Pétanque en équipe suivi d''un apéro', 0);
+
+-- =========================================
+-- Bloc de sorties TEST pour valider le worker d'états (15/10/2025 ~11:10)
+-- Noms explicites → état attendu après passage du worker
+-- =========================================
+INSERT INTO sortie (id, site_id, etat_id, participant_organisateur_id, lieu_id, nom, date_heure_debut, duree, date_limite_inscription, nb_inscriptions_max, infos_sortie, archivee) VALUES
+    -- Doit devenir: Ouverte (avant début et avant date limite, non pleine)
+    (34, 1, 1, 1, 1, 'TEST_Ouverte',       '2025-10-18', 180, '2025-10-17', 10, 'Test: devrait passer à Ouverte', 0),
+    (35, 2, 1, 2, 2, 'TEST_Ouverte1',      '2025-10-19', 120, '2025-10-18', 15, 'Test: devrait passer à Ouverte', 0),
+
+    -- Doit devenir: Clôturée (date limite dépassée)
+    (36, 3, 2, 3, 3, 'TEST_Cloturee',      '2025-10-20', 120, '2025-10-10', 15, 'Test: devrait passer à Clôturée (date limite dépassée)', 0),
+    -- Doit devenir: Clôturée (capacité pleine)
+    (37, 4, 2, 4, 4, 'TEST_Cloturee1',     '2025-10-21', 120, '2025-10-20', 2,  'Test: devrait passer à Clôturée (plein)', 0),
+
+    -- Doit devenir: Activité en cours (début aujourd'hui, durée couvre la journée)
+    (38, 5, 2, 5, 5, 'TEST_EnCours',       '2025-10-15', 1440, '2025-10-14', 20, 'Test: devrait passer à Activité en cours', 0),
+    (39, 6, 2, 6, 6, 'TEST_EnCours1',      '2025-10-15', 1440, '2025-10-14', 30, 'Test: devrait passer à Activité en cours', 0),
+
+    -- Doit devenir: Passée (début dans le passé)
+    (40, 7, 2, 7, 7, 'TEST_Passee',        '2025-10-10', 60,  '2025-10-08', 20, 'Test: devrait passer à Passée', 0),
+    (41, 8, 2, 8, 8, 'TEST_Passee1',       '2025-09-30', 120, '2025-09-28', 25, 'Test: devrait passer à Passée', 0),
+
+    -- Doit rester: Annulée (le worker ne touche pas aux sorties annulées)
+    (42, 9, 6, 9, 9, 'TEST_Annulee',       '2025-10-18', 120, '2025-10-16', 15, 'Test: reste Annulée', 0);
+
+-- Remplissage pour capacité pleine de TEST_Cloturee1 (nb_max = 2)
+INSERT INTO sortie_participant (sortie_id, participant_id) VALUES
+    (37, 1), (37, 2);
+
+-- =========================================
+-- Fin du bloc de tests worker d’états
+-- =========================================
