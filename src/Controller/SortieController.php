@@ -15,13 +15,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
+use App\Message\RefreshOneSortieStateMessage;
+use App\Service\MeteoService;
 
 #[Route('/sortie')]
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[IsGranted('IS_AUTHENTICATED_FULLY')] // restauration: le contrôleur nécessite une authentification complète
 class SortieController extends AbstractController
 {
     #[Route(name: 'app_sortie_index', methods: ['GET'])]
-    public function index(Request $request, SortieRepository $repo): Response
+    public function index(Request $request, SortieRepository $repo, MeteoService $meteo): Response
     {
         $form = $this->createForm(SortieFilterType::class);
         $form->handleRequest($request);
@@ -31,10 +34,49 @@ class SortieController extends AbstractController
 
         $sorties = $repo->findForListing($filters, $user);
 
+        $meteos = [];
+        foreach ($sorties as $s) {
+            $d = $s->getDateHeureDebut();
+            $lieu = $s->getLieu();
+
+            $reason = null;
+            if (!$d) {
+                $reason = 'Date de sortie inconnue';
+            } elseif (!$lieu) {
+                $reason = 'Lieu de la sortie inconnu';
+            } elseif ($lieu->getLatitude() === null || $lieu->getLongitude() === null) {
+                $reason = 'Coordonnées du lieu manquantes';
+            } else {
+                $dt = \DateTimeImmutable::createFromMutable($d);
+                $fc = $meteo->getDailyForecast($dt, (float)$lieu->getLatitude(), (float)$lieu->getLongitude());
+
+                if ($fc) {
+                    $meteos[$s->getId()] = $fc;
+                    continue;
+                }
+
+                $today0 = new \DateTimeImmutable('today');
+                $days = (int)$today0->diff($dt->setTime(0,0))->format('%r%a');
+
+                if ($days > 15) {
+                    $reason = 'Date trop lointaine (prévision au-delà de 16 jours)';
+                } elseif ($days < -60) {
+                    $reason = 'Historique indisponible pour cette date';
+                } else {
+                    $reason = 'Aucune donnée météo fournie par l’API pour cette date';
+                }
+            }
+
+            if ($reason) {
+                $meteos[$s->getId()] = ['na_reason' => $reason];
+            }
+        }
+
         return $this->render('sortie/index.html.twig', [
-            'form' => $form->createView(),
+            'form'    => $form->createView(),
             'sorties' => $sorties,
-            'me' => $user,
+            'me'      => $user,
+            'meteo'  => $meteos,
         ]);
     }
 
@@ -63,14 +105,16 @@ class SortieController extends AbstractController
 
         return $this->render('sortie/new.html.twig', [
             'form' => $form->createView(),
+            's'    => $sortie,
         ], new Response(status: $status));
     }
 
-    #[Route('/sortie/{id}', name: 'app_sortie_show', methods: ['GET'])]
+    #[Route('/{id}', name: 'app_sortie_show', methods: ['GET'])]
     public function show(
         Sortie $sortie,
         EtatRepository $etatRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MeteoService $meteo
     ): Response {
         $now = new \DateTimeImmutable();
 
@@ -99,22 +143,44 @@ class SortieController extends AbstractController
             }
         }
 
+        // Initialisation par défaut pour éviter une variable non définie
+        $meteoNow = null;
+        if ($sortie->getLieu()?->getLatitude() !== null
+            && $sortie->getLieu()?->getLongitude() !== null
+            && $sortie->getDateHeureDebut() instanceof \DateTimeInterface) {
+
+            $meteoNow = $meteo->getDailyForecast(
+                $sortie->getDateHeureDebut(),
+                (float)$sortie->getLieu()->getLatitude(),
+                (float)$sortie->getLieu()->getLongitude()
+            );
+        }
+
         return $this->render('sortie/show.html.twig', [
             's'  => $sortie,
             'me' => $this->getUser(),
             'avgNote' => $moy,
             'myNote' => $maNote,
+            'meteo' => $meteoNow,
         ]);
     }
 
     #[Route('/{id}/annuler', name: 'app_sortie_annuler', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_USER')] // restauration: accès réservé aux utilisateurs connectés
     public function annuler(
         Sortie $sortie,
         Request $request,
         EtatRepository $etatRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MessageBusInterface $bus
     ) {
+        // Vérification via voter: si refus → message + retour show (pas de 403 ici pour conserver l'UX)
+        if (!$this->isGranted('SORTIE_CANCEL', $sortie)) {
+            $this->addFlash('error', "Seul l'organisateur de la sortie ou un administrateur peut annuler une sortie.");
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        // CSRF obligatoire (POST uniquement)
         if (!$this->isCsrfTokenValid('cancel'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
@@ -157,6 +223,9 @@ class SortieController extends AbstractController
 
         $em->flush();
 
+        // Rafraîchissement asynchrone de l'état
+        $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
+
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
 
@@ -166,7 +235,8 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EtatRepository $etatRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MessageBusInterface $bus
     ) {
         if (!$this->isCsrfTokenValid('publish'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
@@ -193,6 +263,9 @@ class SortieController extends AbstractController
         $sortie->setEtat($etatOuverte);
         $em->flush();
 
+        // Tick de recalcul
+        $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
+
         $this->addFlash('success', 'La sortie a été publiée (ouverte aux inscriptions).');
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
@@ -203,19 +276,22 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EntityManagerInterface $em,
-        EtatRepository $etatRepo
+        EtatRepository $etatRepo,
+        MessageBusInterface $bus
     ): Response {
+        // Décision via voter (peut rester pour robustesse, mais l'anonyme ne rentre plus ici)
+        if (!$this->isGranted('SORTIE_REGISTER', $sortie)) {
+            $this->addFlash('error', "Il faut être connecté en tant que participant pour s'inscrire à une sortie.");
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
+
+        // CSRF (POST uniquement)
         if (!$this->isCsrfTokenValid('inscrire'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
         $user = $this->getUser();
-
-        if (!$user instanceof \App\Entity\Participant) {
-            throw $this->createAccessDeniedException('Utilisateur non valide.');
-        }
-
         $participantId = $user->getId();
 
         if (!$sortie->getEtat() || strtolower(trim($sortie->getEtat()->getLibelle())) !== 'ouverte') {
@@ -265,11 +341,12 @@ class SortieController extends AbstractController
                 $etatCloturee = $etatRepo->findOneBy(['libelle' => 'Clôturée']);
                 if ($etatCloturee) {
                     $sortie->setEtat($etatCloturee);
-                    $em->flush(); // persiste le changement d’état
+                    $em->flush();
                 }
             }
 
             $this->addFlash('success', 'Inscription réussie !');
+            $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
         } catch (\Exception $e) {
             $this->addFlash('error', 'Erreur lors de l\'inscription : ' . $e->getMessage());
         }
@@ -283,18 +360,18 @@ class SortieController extends AbstractController
         Sortie $sortie,
         Request $request,
         EntityManagerInterface $em,
-        EtatRepository $etatRepo
+        EtatRepository $etatRepo,
+        MessageBusInterface $bus
     ): Response {
         if (!$this->isCsrfTokenValid('desister'.$sortie->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
-        $user = $this->getUser();
+        // Voter: exige un Participant connecté pour se désister
+        $this->denyAccessUnlessGranted('SORTIE_UNREGISTER', $sortie);
 
-        if (!$user instanceof \App\Entity\Participant) {
-            throw $this->createAccessDeniedException('Utilisateur non valide.');
-        }
+        $user = $this->getUser();
 
         $participant = $em->getRepository(\App\Entity\Participant::class)->find($user->getId());
 
@@ -347,6 +424,10 @@ class SortieController extends AbstractController
         }
 
         $this->addFlash('success', 'Vous vous êtes désisté de cette sortie.');
+
+        // Recalcul asynchrone après désistement
+        $bus->dispatch(new RefreshOneSortieStateMessage($sortie->getId()));
+
         return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
     }
 
@@ -354,10 +435,18 @@ class SortieController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function edit(Sortie $sortie, Request $request, EntityManagerInterface $em): Response
     {
-        $me = $this->getUser();
+        // Voter en premier: si refus → message + retour show
+        if (!$this->isGranted('SORTIE_EDIT', $sortie)) {
+            $this->addFlash('error', "Seul l'organisateur de la sortie ou un administrateur peux éditer une sortie");
+            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
+        }
 
-        if (!$sortie->getParticipantOrganisateur() || $sortie->getParticipantOrganisateur()->getId() !== $me->getId()) {
-            $this->addFlash('error', 'Vous ne pouvez pas modifier cette sortie.');
+        $me = $this->getUser();
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+        $isOrganisateur = $sortie->getParticipantOrganisateur() && $sortie->getParticipantOrganisateur()->getId() === $me->getId();
+
+        if (!($isOrganisateur || $isAdmin)) {
+            $this->addFlash('error', "Seul l'organisateur de la sortie ou un administrateur peux éditer une sortie");
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
@@ -370,6 +459,12 @@ class SortieController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            if ($request->request->get('delete_photo') === '1') {
+                $sortie->setPhotoFile(null);
+                $sortie->setPhoto(null);
+            }
+
             $em->flush();
             $this->addFlash('success', 'Sortie mise à jour.');
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
@@ -381,5 +476,4 @@ class SortieController extends AbstractController
             'me'   => $me,
         ]);
     }
-
 }

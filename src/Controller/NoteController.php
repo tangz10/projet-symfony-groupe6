@@ -22,21 +22,10 @@ final class NoteController extends AbstractController
             return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
         }
 
+        // Décision d'accès centralisée via voter + AccessDeniedSubscriber pour les messages
+        $this->denyAccessUnlessGranted('NOTE_RATE', $sortie);
+
         $me = $this->getUser();
-        if (!$me instanceof \App\Entity\Participant) {
-            throw $this->createAccessDeniedException();
-        }
-
-        $etat = $sortie->getEtat()?->getLibelle();
-        if (!$etat == 'Passée') {
-            $this->addFlash('error', 'Vous pourrez noter une fois la sortie terminée.');
-            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
-        }
-
-        if (!$sortie->getParticipantInscrit()->contains($me)) {
-            $this->addFlash('error', 'Seuls les participants inscrits peuvent noter.');
-            return $this->redirectToRoute('app_sortie_show', ['id' => $sortie->getId()]);
-        }
 
         $note = (int) $request->request->get('note', 0);
         if ($note < 1 || $note > 5) {

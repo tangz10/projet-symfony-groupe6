@@ -5,20 +5,21 @@ namespace App\Controller;
 use App\Entity\Ville;
 use App\Form\VilleType;
 use App\Repository\VilleRepository;
+use App\Security\Voter\VilleVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/ville')]
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
 final class VilleController extends AbstractController
 {
     #[Route(name: 'app_ville_index', methods: ['GET'])]
     public function index(VilleRepository $villeRepository): Response
     {
+        $this->denyAccessUnlessGranted(VilleVoter::LIST);
+
         return $this->render('ville/index.html.twig', [
             'villes' => $villeRepository->findAll(),
         ]);
@@ -28,6 +29,8 @@ final class VilleController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $ville = new Ville();
+        $this->denyAccessUnlessGranted(VilleVoter::CREATE, $ville);
+
         $form = $this->createForm(VilleType::class, $ville);
         $form->handleRequest($request);
 
@@ -47,6 +50,8 @@ final class VilleController extends AbstractController
     #[Route('/{id}', name: 'app_ville_show', methods: ['GET'])]
     public function show(Ville $ville): Response
     {
+        $this->denyAccessUnlessGranted(VilleVoter::VIEW, $ville);
+
         return $this->render('ville/show.html.twig', [
             'ville' => $ville,
         ]);
@@ -55,6 +60,8 @@ final class VilleController extends AbstractController
     #[Route('/{id}/edit', name: 'app_ville_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Ville $ville, EntityManagerInterface $entityManager): Response
     {
+        $this->denyAccessUnlessGranted(VilleVoter::EDIT, $ville);
+
         $form = $this->createForm(VilleType::class, $ville);
         $form->handleRequest($request);
 
@@ -73,6 +80,8 @@ final class VilleController extends AbstractController
     #[Route('/{id}', name: 'app_ville_delete', methods: ['POST'])]
     public function delete(Request $request, Ville $ville, EntityManagerInterface $entityManager): Response
     {
+        $this->denyAccessUnlessGranted(VilleVoter::DELETE, $ville);
+
         if ($this->isCsrfTokenValid('delete'.$ville->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($ville);
             $entityManager->flush();
