@@ -38,6 +38,11 @@ class SortieStateResolver
             return false;
         }
 
+        // Si Créée: on ne change pas automatiquement, elle doit être publiée manuellement
+        if ($currentLabel && $this->equalsEtat($current, $etatCreee)) {
+            return false;
+        }
+
         // Données nécessaires
         $dateDebut = $sortie->getDateHeureDebut();
         $duree = $sortie->getDuree() ?? 0; // minutes
@@ -63,11 +68,6 @@ class SortieStateResolver
             $isFull = $nbInscrits >= $nbMax && $nbMax > 0;
             $isAfterLimit = $now > $dateLimite;
             $target = ($isFull || $isAfterLimit) ? $etatCloturee : $etatOuverte;
-        }
-
-        // Edge: si état "Créée" et target calculé = Ouverte, on bascule sur Ouverte (publication implicite)
-        if ($current && $this->equalsEtat($current, $etatCreee) && $this->equalsEtat($target, $etatOuverte)) {
-            // ok, on passera à Ouverte ci-dessous
         }
 
         if (!$current || !$this->equalsEtat($current, $target)) {
@@ -102,4 +102,3 @@ class SortieStateResolver
         return $a && $b && mb_strtolower($a->getLibelle()) === mb_strtolower($b->getLibelle());
     }
 }
-
