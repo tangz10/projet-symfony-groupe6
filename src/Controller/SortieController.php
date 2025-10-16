@@ -109,7 +109,7 @@ class SortieController extends AbstractController
         ], new Response(status: $status));
     }
 
-    #[Route('/sortie/{id}', name: 'app_sortie_show', methods: ['GET'])]
+    #[Route('/{id}', name: 'app_sortie_show', methods: ['GET'])]
     public function show(
         Sortie $sortie,
         EtatRepository $etatRepository,
