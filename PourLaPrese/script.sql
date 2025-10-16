@@ -16,7 +16,7 @@ INSERT INTO etat (id, libelle) VALUES
                                    (1, 'Créée'),
                                    (2, 'Ouverte'),
                                    (3, 'Clôturée'),
-                                   (4, 'Activité en cours'),
+                                   (4, 'En cours'),
                                    (5, 'Passée'),
                                    (6, 'Annulée');
 
