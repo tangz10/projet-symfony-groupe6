@@ -4,25 +4,28 @@
 {% block title %}Liste des sites{% endblock %}
 
 {% block body %}
-    <div class="min-h-screen bg-white py-8">
+    <div class="min-h-screen bg-white py-4 sm:py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Header -->
-            <div class="mb-8 flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Liste des sites</h1>
-                    <p class="mt-2 text-sm text-gray-600">Gérez vos sites et leurs informations</p>
+            <div class="mb-6 sm:mb-8">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Liste des sites</h1>
+                        <p class="mt-1 sm:mt-2 text-sm text-gray-600">Gérez vos sites et leurs informations</p>
+                    </div>
+                    <a href="{{ path('app_site_new') }}"
+                       class="inline-flex items-center justify-center px-4 py-2.5 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5 shadow-md">
+                        <svg class="w-5 h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        <span class="hidden sm:inline">Ajouter un site</span>
+                        <span class="sm:hidden ml-2">Nouveau</span>
+                    </a>
                 </div>
-                <a href="{{ path('app_site_new') }}"
-                   class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Ajouter un site
-                </a>
             </div>
 
-            <!-- Card principale -->
-            <div class="bg-white rounded-xl shadow-lg border border-gray-100">
+            <!-- Vue Desktop - Table -->
+            <div class="hidden md:block bg-white rounded-xl shadow-lg border border-gray-100">
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
@@ -42,8 +45,8 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-4">
                                         <a href="{{ path('app_site_edit', {'id': site.id}) }}"
-                                           class="text-gray-400 hover:text-purple-600 transition-colors duration-200">
-                                            <span class="sr-only">Modifier</span>
+                                           class="text-gray-400 hover:text-purple-600 transition-colors duration-200"
+                                           title="Modifier">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                             </svg>
@@ -53,7 +56,6 @@
                                         }) }}
                                     </div>
                                 </td>
-
                             </tr>
                         {% else %}
                             <tr>
@@ -71,7 +73,7 @@
                     </table>
                 </div>
 
-                <!-- Pagination -->
+                <!-- Pagination Desktop -->
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-gray-600">
@@ -93,6 +95,81 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Vue Mobile - Cards -->
+            <div class="md:hidden space-y-4">
+                {% for site in sites %}
+                    <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                        <div class="p-4">
+                            <!-- En-tête de la carte -->
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex-1">
+                                    <span class="inline-block px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 rounded-md mb-2">
+                                        ID: {{ site.id }}
+                                    </span>
+                                    <h3 class="text-lg font-semibold text-gray-900">{{ site.nom }}</h3>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex items-center gap-2 pt-3 border-t border-gray-100">
+                                <a href="{{ path('app_site_edit', {'id': site.id}) }}"
+                                   class="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Modifier
+                                </a>
+                                <div class="flex items-center">
+                                    {{ include('site/_delete_form.html.twig', {'button_class':
+                                        'inline-flex items-center justify-center p-2.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg transition-colors duration-200'
+                                    }) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="bg-white rounded-xl shadow-md border border-gray-100 p-12">
+                        <div class="flex flex-col items-center text-center">
+                            <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2zM12 7v10m5-5H7"/>
+                            </svg>
+                            <p class="text-gray-500 font-medium mb-2">Aucun site trouvé</p>
+                            <p class="text-sm text-gray-400 mb-4">Commencez par ajouter votre premier site</p>
+                            <a href="{{ path('app_site_new') }}"
+                               class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                Ajouter un site
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <!-- Pagination Mobile -->
+                {% if sites|length > 0 %}
+                    <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4">
+                        <p class="text-sm text-gray-600 text-center mb-3">
+                            {{ sites|length }} site(s) au total
+                        </p>
+                        <div class="flex items-center gap-2">
+                            <button class="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-white text-sm font-medium text-gray-700 hover:text-purple-600 hover:border-purple-300 border border-gray-300 rounded-lg shadow-sm transition-all duration-200">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                                Préc.
+                            </button>
+                            <button class="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-white text-sm font-medium text-gray-700 hover:text-purple-600 hover:border-purple-300 border border-gray-300 rounded-lg shadow-sm transition-all duration-200">
+                                Suiv.
+                                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

@@ -17,7 +17,7 @@
     {% endblock %}
 </head>
 
-<body class="min-h-dvh flex flex-col bg-gray-100" x-data="{ mobileMenu: false }">
+<body class="min-h-dvh flex flex-col bg-gray-100 overflow-x-hidden" x-data="{ mobileMenu: false }">
 {% set current_route = app.request.attributes.get('_route') %}
 
 {% if current_route not in ['app_login', 'app_register'] %}
@@ -46,7 +46,7 @@
                             Villes
                         </a>
                         <a href="{{ path('app_lieu_index') }}"
-                           class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-purple-600 border-b-2 {% if app.request.get('_route') starts with 'app_ville' %}border-purple-600 text-purple-600{% else %}border-transparent{% endif %} transition-colors">
+                           class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-purple-600 border-b-2 {% if app.request.get('_route') starts with 'app_lieu' %}border-purple-600 text-purple-600{% else %}border-transparent{% endif %} transition-colors">
                             Lieux
                         </a>
                         <a href="{{ path('app_site_index') }}"
@@ -138,15 +138,20 @@
                        class="block pl-3 pr-4 py-2 text-base font-medium {% if app.request.get('_route') starts with 'app_site' %}text-purple-600 bg-purple-50{% else %}text-gray-700 hover:text-purple-600 hover:bg-purple-50{% endif %}">
                         Sites
                     </a>
+                    <a href="{{ path('app_lieu_index') }}"
+                       class="block pl-3 pr-4 py-2 text-base font-medium {% if app.request.get('_route') starts with 'app_lieu' %}text-purple-600 bg-purple-50{% else %}text-gray-700 hover:text-purple-600 hover:bg-purple-50{% endif %}">
+                        Lieux
+                    </a>
                     <a href="{{ path('app_participant_index') }}"
                        class="block pl-3 pr-4 py-2 text-base font-medium {% if app.request.get('_route') starts with 'app_participant' %}text-purple-600 bg-purple-50{% else %}text-gray-700 hover:text-purple-600 hover:bg-purple-50{% endif %}">
                         Administration
                     </a>
+                {% else %}
+                    <a href="{{ path('app_sortie_index') }}"
+                       class="block pl-3 pr-4 py-2 text-base font-medium {% if app.request.get('_route') starts with 'app_sortie' %}text-purple-600 bg-purple-50{% else %}text-gray-700 hover:text-purple-600 hover:bg-purple-50{% endif %}">
+                        Sorties
+                    </a>
                 {% endif %}
-                <a href="{{ path('app_sortie_index') }}"
-                   class="block pl-3 pr-4 py-2 text-base font-medium {% if app.request.get('_route') starts with 'app_sortie' %}text-purple-600 bg-purple-50{% else %}text-gray-700 hover:text-purple-600 hover:bg-purple-50{% endif %}">
-                    Sorties
-                </a>
 
                 {% if app.user %}
                     <div class="border-t border-gray-100 pt-4">

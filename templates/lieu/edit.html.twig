@@ -1,13 +1,133 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit Lieu{% endblock %}
+{% block title %}Modifier le lieu{% endblock %}
 
 {% block body %}
-    <h1>Edit Lieu</h1>
+    <div class="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white py-12">
+        <div class="w-full max-w-2xl mx-4">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                <!-- En-tête -->
+                <div class="relative overflow-hidden px-8 py-6 bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between">
+                            <h1 class="text-2xl font-semibold">Modifier le lieu</h1>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm">
+                                Édition
+                            </span>
+                        </div>
+                        <p class="mt-2 text-purple-100 text-sm">Mettez à jour les informations du lieu</p>
+                    </div>
+                    <!-- Cercles décoratifs -->
+                    <div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-purple-500 rounded-full opacity-20"></div>
+                    <div class="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-32 h-32 bg-purple-500 rounded-full opacity-20"></div>
+                </div>
 
-    {{ include('lieu/_form.html.twig', {'button_label': 'Update'}) }}
+                <!-- Formulaire -->
+                <div class="p-8">
+                    {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
 
-    <a href="{{ path('app_lieu_index') }}">back to list</a>
+                    <div class="space-y-6">
+                        <!-- Champ Nom -->
+                        <div class="relative group">
+                            {{ form_label(form.nom, 'Nom du lieu', {'label_attr': {
+                                'class': 'block text-sm font-medium text-gray-700 mb-1'
+                            }}) }}
+                            {{ form_widget(form.nom, {'attr': {
+                                'class': 'block w-full px-4 h-11 text-gray-700 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-colors duration-200',
+                                'placeholder': 'Entrez le nom du lieu'
+                            }}) }}
+                        </div>
 
-    {{ include('lieu/_delete_form.html.twig') }}
+                        <!-- Champ Rue -->
+                        <div class="relative group">
+                            {{ form_label(form.rue, 'Rue', {'label_attr': {
+                                'class': 'block text-sm font-medium text-gray-700 mb-1'
+                            }}) }}
+                            {{ form_widget(form.rue, {'attr': {
+                                'class': 'block w-full px-4 h-11 text-gray-700 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-colors duration-200',
+                                'placeholder': 'Entrez l\'adresse de la rue'
+                            }}) }}
+                        </div>
+
+                        <!-- Latitude et Longitude en grille -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <!-- Champ Latitude -->
+                            <div class="relative group">
+                                {{ form_label(form.latitude, 'Latitude', {'label_attr': {
+                                    'class': 'block text-sm font-medium text-gray-700 mb-1'
+                                }}) }}
+                                {{ form_widget(form.latitude, {'attr': {
+                                    'class': 'block w-full px-4 h-11 text-gray-700 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-colors duration-200',
+                                    'placeholder': 'Ex: 48.8566'
+                                }}) }}
+                            </div>
+
+                            <!-- Champ Longitude -->
+                            <div class="relative group">
+                                {{ form_label(form.longitude, 'Longitude', {'label_attr': {
+                                    'class': 'block text-sm font-medium text-gray-700 mb-1'
+                                }}) }}
+                                {{ form_widget(form.longitude, {'attr': {
+                                    'class': 'block w-full px-4 h-11 text-gray-700 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-colors duration-200',
+                                    'placeholder': 'Ex: 2.3522'
+                                }}) }}
+                            </div>
+                        </div>
+
+                        <!-- Champ Ville -->
+                        <div class="relative group">
+                            {{ form_label(form.ville, 'Ville', {'label_attr': {
+                                'class': 'block text-sm font-medium text-gray-700 mb-1'
+                            }}) }}
+                            {{ form_widget(form.ville, {'attr': {
+                                'class': 'block w-full px-4 h-11 text-gray-700 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-colors duration-200'
+                            }}) }}
+                        </div>
+
+                        <!-- Messages d'erreur -->
+                        {% if form_errors(form) %}
+                            <div class="p-4 rounded-lg bg-red-50 border border-red-200">
+                                <div class="text-sm text-red-600">
+                                    {{ form_errors(form) }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center justify-end space-x-4 mt-8 pt-6 border-t border-gray-100">
+                        <a href="{{ path('app_lieu_index') }}"
+                           class="inline-flex items-center px-4 h-10 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50 hover:text-purple-600 hover:border-purple-300 transition-colors duration-200">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            </svg>
+                            Retour
+                        </a>
+                        <button type="submit"
+                                class="inline-flex items-center px-6 h-10 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Mettre à jour
+                        </button>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+
+            <!-- Breadcrumb -->
+            <div class="mt-6 flex justify-center">
+                <nav class="flex items-center space-x-3 text-sm text-gray-500">
+                    <a href="{{ path('app_lieu_index') }}" class="hover:text-purple-600 transition-colors">Lieux</a>
+                    <span class="text-gray-300">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </span>
+                    <span class="text-gray-400">Modifier</span>
+                </nav>
+            </div>
+        </div>
+    </div>
 {% endblock %}

@@ -13,6 +13,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Vich\UploaderBundle\Form\Type\VichImageType;
 
 class SortieType extends AbstractType
 {
@@ -51,6 +52,13 @@ class SortieType extends AbstractType
                 'class' => Lieu::class,
                 'choice_label' => 'nom',
                 'label' => 'Lieu',
+            ])
+            ->add('photoFile', VichImageType::class, [
+                'required'    => false,
+                'allow_delete'=> false,
+                'download_uri'=> false,
+                'image_uri'   => false,
+                'label'       => 'Photo de la sortie',
             ])
         ;
     }

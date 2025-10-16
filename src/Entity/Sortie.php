@@ -8,7 +8,10 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\HttpFoundation\File\File;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
+#[Vich\Uploadable]
 #[ORM\Entity(repositoryClass: SortieRepository::class)]
 class Sortie
 {
@@ -73,6 +76,15 @@ class Sortie
      */
     #[ORM\OneToMany(targetEntity: Note::class, mappedBy: 'sortie')]
     private Collection $note;
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $photo = null;
+
+    #[Vich\UploadableField(mapping: 'sortie_images', fileNameProperty: 'photo')]
+    private ?File $photoFile = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $updatedAt = null;
 
     public function __construct()
     {
@@ -273,6 +285,38 @@ class Sortie
             }
         }
 
+        return $this;
+    }
+
+    public function getPhoto(): ?string
+    {
+        return $this->photo;
+    }
+    public function setPhoto(?string $photo): self
+    {
+        $this->photo = $photo;
+        return $this;
+    }
+
+    public function setPhotoFile(?File $file = null): void
+    {
+        $this->photoFile = $file;
+        if (null !== $file) {
+            $this->updatedAt = new \DateTime();
+        }
+    }
+    public function getPhotoFile(): ?File
+    {
+        return $this->photoFile;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+    public function setUpdatedAt(?\DateTimeInterface $d): self
+    {
+        $this->updatedAt = $d;
         return $this;
     }
 }

@@ -5,12 +5,17 @@ namespace App\Controller;
 use App\Entity\Participant;
 use App\Form\ParticipantType;
 use App\Repository\ParticipantRepository;
+use App\Service\ParticipantCsvImporter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Security\Http\Attribute\Security;
+use Symfony\Component\Validator\Constraints\File;
+
 
 #[Route('/participant')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -93,6 +98,37 @@ final class ParticipantController extends AbstractController
         ]);
     }
 
+    #[Route('/import-csv', name: 'app_participant_import_csv', methods: ['POST'])]
+    public function importCsv(Request $request, ParticipantCsvImporter $importer): Response
+    {
+        if (!$this->isCsrfTokenValid('import_csv', $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide');
+            return $this->redirectToRoute('app_participant_index');
+        }
+
+        $file = $request->files->get('csv_file');
+
+        if (!$file) {
+            $this->addFlash('error', 'Aucun fichier uploadé');
+            return $this->redirectToRoute('app_participant_index');
+        }
+
+        $results = $importer->import($file->getPathname());
+
+        $this->addFlash('success', sprintf(
+            '%d participants importés avec succès',
+            $results['success']
+        ));
+
+        if (!empty($results['errors'])) {
+            foreach ($results['errors'] as $error) {
+                $this->addFlash('error', $error);
+            }
+        }
+
+        return $this->redirectToRoute('app_participant_index');
+    }
+
     #[Route('/{id}', name: 'app_participant_delete', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function delete(Request $request, Participant $participant, EntityManagerInterface $entityManager): Response
@@ -107,4 +143,6 @@ final class ParticipantController extends AbstractController
 
         return $this->redirectToRoute('app_participant_index', [], Response::HTTP_SEE_OTHER);
     }
+
+
 }
