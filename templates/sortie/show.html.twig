@@ -307,7 +307,9 @@
                                 {% if (isOrganisateur or isAdmin) and not isAnnulee and isCreee %}
                                     <form method="post" action="{{ path('app_sortie_annuler', {'id': s.id}) }}" class="w-full sm:w-auto">
                                         <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ s.id) }}">
-                                        <button class="w-full h-11 px-6 rounded-full border border-red-600 text-red-600 bg-white hover:bg-red-50 shadow-sm">
+                                        <button type="button"
+                                                class="w-full h-11 px-6 rounded-full border border-red-600 text-red-600 bg-white hover:bg-red-50 shadow-sm"
+                                                onclick="document.getElementById('modal-annulation').classList.remove('hidden')">
                                             Annuler la sortie
                                         </button>
                                     </form>

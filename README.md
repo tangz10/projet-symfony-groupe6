@@ -48,7 +48,7 @@ cd projet-symfony-groupe6
 ```
 ### 2️⃣ Installer les dépendances
 ```bash
-composer install
+symfony composer install
 ```
 ### 3️⃣ Configurer l’environnement
 Créer un fichier .env.local à la racine du projet :
