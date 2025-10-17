@@ -58,17 +58,19 @@ INSERT INTO ville (id, nom, code_postal) VALUES
 
 -- Insertion des participants
 -- Hash du mot de passe remplacé : $2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62
-INSERT INTO participant (id, site_id, email, roles, password, nom, prenom, telephone, administrateur, actif) VALUES
-                                                                                                                 (1, 1, 'mathis.delahais2024@campus-eni.fr', '["ROLE_USER"]', '$2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62', 'Delahais', 'Mathis', '0612345678', 0, 1),
-                                                                                                                 (2, 1, 'johann.degennes2024@campus-eni.fr', '["ROLE_USER"]', '$2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62', 'Degennes', 'Johann', '0623456789', 0, 1),
-                                                                                                                 (3, 2, 'landrygabriel960@gmail.com', '["ROLE_USER"]', '$2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62', 'Landry', 'Gabriel', '0634567890', 0, 1),
-                                                                                                                 (4, 3, 'sophie.martin@campus-eni.fr', '["ROLE_USER"]', '$2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62', 'Martin', 'Sophie', '0645678901', 0, 1),
-                                                                                                                 (5, 1, 'lucas.bernard@campus-eni.fr', '["ROLE_ADMIN"]', '$2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62', 'Bernard', 'Lucas', '0656789012', 1, 1),
-                                                                                                                 (6, 2, 'emma.dubois@campus-eni.fr', '["ROLE_USER"]', '$2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62', 'Dubois', 'Emma', '0667890123', 0, 1),
-                                                                                                                 (7, 4, 'thomas.leroy@campus-eni.fr', '["ROLE_USER"]', '$2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62', 'Leroy', 'Thomas', '0678901234', 0, 1),
-                                                                                                                 (8, 5, 'julie.moreau@campus-eni.fr', '["ROLE_USER"]', '$2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62', 'Moreau', 'Julie', '0689012345', 0, 1),
-                                                                                                                 (9, 6, 'alexandre.petit@campus-eni.fr', '["ROLE_USER"]', '$2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62', 'Petit', 'Alexandre', '0690123456', 0, 1),
-                                                                                                                 (10, 7, 'marie.garcia@campus-eni.fr', '["ROLE_USER"]', '$2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62', 'Garcia', 'Marie', '0601234567', 0, 1);
+-- Insertion des participants (avec pseudo)
+-- Hash du mot de passe conservé : $2y$13$AIcQSEv7TsGQ6YRqACSQtuCGfDXtcqWjkNQCDyEyIsRNJc/1yte62
+INSERT INTO participant (id, site_id, email, roles, password, nom, prenom, telephone, administrateur, actif, pseudo) VALUES
+(1, 1, 'mathis.delahais2024@campus-eni.fr', '["ROLE_USER"]', '$2y$13$nwQLmPekZqJSZHtypFu05O5ESxysWrtX5F4PZ/24sYQDsWysmL7mK', 'Delahais', 'Mathis', '0612345678', 0, 1, 'mathisD'),
+(2, 1, 'johann.degennes2024@campus-eni.fr',   '["ROLE_USER"]', '$2y$13$nwQLmPekZqJSZHtypFu05O5ESxysWrtX5F4PZ/24sYQDsWysmL7mK', 'Degennes', 'Johann', '0623456789', 0, 1, 'johannD'),
+(3, 2, 'landrygabriel960@gmail.com',         '["ROLE_USER"]', '$2y$13$nwQLmPekZqJSZHtypFu05O5ESxysWrtX5F4PZ/24sYQDsWysmL7mK', 'Landry',  'Gabriel','0634567890', 0, 1, 'landryG'),
+(4, 3, 'sophie.martin@campus-eni.fr',        '["ROLE_USER"]', '$2y$13$nwQLmPekZqJSZHtypFu05O5ESxysWrtX5F4PZ/24sYQDsWysmL7mK', 'Martin',  'Sophie', '0645678901', 0, 1, 'sophieM'),
+(5, 1, 'lucas.bernard@campus-eni.fr',        '["ROLE_ADMIN"]',' $2y$13$nwQLmPekZqJSZHtypFu05O5ESxysWrtX5F4PZ/24sYQDsWysmL7mK', 'Bernard', 'Lucas',  '0656789012', 1, 1, 'lucasB'),
+(6, 2, 'emma.dubois@campus-eni.fr',          '["ROLE_USER"]', '$2y$13$nwQLmPekZqJSZHtypFu05O5ESxysWrtX5F4PZ/24sYQDsWysmL7mK', 'Dubois',  'Emma',   '0667890123', 0, 1, 'emmaD'),
+(7, 4, 'thomas.leroy@campus-eni.fr',         '["ROLE_USER"]', '$2y$13$nwQLmPekZqJSZHtypFu05O5ESxysWrtX5F4PZ/24sYQDsWysmL7mK', 'Leroy',   'Thomas', '0678901234', 0, 1, 'thomasL'),
+(8, 5, 'julie.moreau@campus-eni.fr',         '["ROLE_USER"]', '$2y$13$nwQLmPekZqJSZHtypFu05O5ESxysWrtX5F4PZ/24sYQDsWysmL7mK', 'Moreau',  'Julie',  '0689012345', 0, 1, 'julieM'),
+(9, 6, 'alexandre.petit@campus-eni.fr',      '["ROLE_USER"]', '$2y$13$nwQLmPekZqJSZHtypFu05O5ESxysWrtX5F4PZ/24sYQDsWysmL7mK', 'Petit',   'Alexandre','0690123456',0, 1, 'alexP'),
+(10,7, 'marie.garcia@campus-eni.fr',         '["ROLE_USER"]', '$2y$13$nwQLmPekZqJSZHtypFu05O5ESxysWrtX5F4PZ/24sYQDsWysmL7mK', 'Garcia',  'Marie',  '0601234567', 0, 1, 'marieG');
 
 -- Insertion des lieux
 INSERT INTO lieu (id, ville_id, nom, rue, latitude, longitude) VALUES
