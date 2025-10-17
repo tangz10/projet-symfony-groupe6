@@ -6,7 +6,7 @@
 parameters:
     archive_time: '12:12:00'
     # Intervalle du fallback en minutes (1440 = 1 jour). Mettre 5 pour la démo.
-    archive_fallback_interval_minutes: 1440
+    archive_fallback_interval_minutes: 5
     # Intervalle (minutes) de rafraîchissement des états (batch + fallback)
     state_refresh_interval_minutes: 5
 
