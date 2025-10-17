@@ -1,0 +1,4 @@
+nom,prenom,email,telephone,pseudo,password,administrateur
+Lopez,Jo,test1@campus-eni.fr,670852020,jolopez,jolopez,TRUE
+Lopez,Brandon,test2@campus-eni.fr,780402010,brandonlopez,brandonlopez,FALSE
+Lopez,Djibril,test3@campus-eni.fr,785805020,djibrillopez,djibrillopez,FALSE
