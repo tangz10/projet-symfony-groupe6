@@ -1,4 +1,4 @@
-# 🧭 Projet Symfony Groupe 6
+an# 🧭 Projet Symfony Groupe 6
 
 > Application web pour gérer des sorties entre membres d’un site
 
@@ -132,3 +132,18 @@ php bin/console doctrine:fixtures:load
 - Johann DEGENNES
 - Gabriel LANDRY
 - Mathis DELAHAIS
+
+
+## Déploiement (Alwaysdata) — bref
+Voici un récapitulatif très court des étapes de déploiement que j'ai suivies :
+1. Création d'un compte Alwaysdata (offre free) pour hébergement PHP.
+2. Déploiement d'une base MySQL depuis leur panneau.
+3. Import du script SQL pour remplir la BDD.
+4. Configuration PHP pour que la racine pointe vers /www/public.
+5. Clonage de la branche `master` du projet dans le dossier `www`.
+6. Création des fichiers `.env` et `.htaccess` dans `/public`.
+7. Exécution de `composer install`.
+8. Attribution des droits (chmod) sur `public` et `var` pour le cache.
+9. Vérification : tout fonctionne.
+
+(Section volontairement courte — pas de détails techniques.)
