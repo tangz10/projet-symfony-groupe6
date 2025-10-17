@@ -1,3 +1,4 @@
+USE keizoh_projet;
 SET FOREIGN_KEY_CHECKS = 0;
 
 DELETE FROM note;
